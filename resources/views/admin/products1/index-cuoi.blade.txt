@@ -1,0 +1,1479 @@
+{{-- Bản gốc --}}
+
+{{-- @extends('layouts.admin')
+
+@section('title', 'Quản lý sản phẩm')
+
+@section('content')
+    <div class="container-fluid px-4">
+
+        <!-- Header & Breadcrumb -->
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <div>
+                <h2 class="fw-bold text-dark mb-1">
+                    <i class="fa-solid fa-boxes-stacked text-primary me-2"></i>Quản lý sản phẩm
+                </h2>
+                <nav aria-label="breadcrumb">
+                    <ol class="breadcrumb mb-0">
+                        <li class="breadcrumb-item"><a href="{{ route('admin.dashboard') }}">Dashboard</a></li>
+                        <li class="breadcrumb-item active">Sản phẩm</li>
+                    </ol>
+                </nav>
+            </div>
+            <a href="{{ route('admin.products.create') }}" class="btn btn-primary btn-lg shadow-sm">
+                <i class="fa-solid fa-plus me-2"></i>Thêm sản phẩm
+            </a>
+        </div>
+
+        <!-- Stats Cards -->
+        <div class="row g-3 mb-4">
+            @php
+                $stats = [
+                    [
+                        'title' => 'Tổng sản phẩm',
+                        'value' => $products->total(),
+                        'icon' => 'fa-boxes',
+                        'bg' => 'primary',
+                    ],
+                    ['title' => 'Còn hàng', 'value' => $inStockCount, 'icon' => 'fa-check', 'bg' => 'success'],
+                    [
+                        'title' => 'Hết hàng',
+                        'value' => $outOfStockCount,
+                        'icon' => 'fa-triangle-exclamation',
+                        'bg' => 'warning',
+                    ],
+                    [
+                        'title' => 'Tổng biến thể',
+                        'value' => $variantsCount,
+                        'icon' => 'fa-layer-group',
+                        'bg' => 'danger',
+                    ],
+                ];
+            @endphp
+
+            @foreach ($stats as $stat)
+                <div class="col-xl-3 col-md-6">
+                    <div class="card shadow-sm h-100 text-white bg-gradient-{{ $stat['bg'] }}">
+                        <div class="card-body d-flex justify-content-between align-items-center">
+                            <div>
+                                <h6 class="text-white-50 mb-1">{{ $stat['title'] }}</h6>
+                                <h3 class="fw-bold mb-0">{{ $stat['value'] }}</h3>
+                            </div>
+                            <div class="fs-1 opacity-50"><i class="fa-solid {{ $stat['icon'] }}"></i></div>
+                        </div>
+                    </div>
+                </div>
+            @endforeach
+        </div>
+
+        <!-- Filter -->
+        <div class="card shadow-sm mb-4">
+            <div class="card-header bg-white py-3">
+                <h5 class="mb-0 fw-semibold"><i class="fa-solid fa-filter text-primary me-2"></i>Bộ lọc</h5>
+            </div>
+            <div class="card-body">
+                <form method="GET" action="{{ route('admin.products.index') }}" class="row g-3 align-items-end">
+                    <div class="col-md-3">
+                        <label class="form-label fw-semibold">Tìm kiếm</label>
+                        <input type="text" name="search" class="form-control form-control-lg"
+                            placeholder="Tên sản phẩm..." value="{{ request('search') }}">
+                    </div>
+                    <div class="col-md-2">
+                        <label class="form-label fw-semibold">Trạng thái</label>
+                        <select name="status" class="form-select form-select-lg">
+                            <option value="">Tất cả</option>
+                            <option value="1" {{ request('status') == '1' ? 'selected' : '' }}>Hoạt động</option>
+                            <option value="0" {{ request('status') == '0' ? 'selected' : '' }}>Vô hiệu hóa</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label fw-semibold">Danh mục</label>
+                        <select name="category_id" class="form-select form-select-lg">
+                            <option value="">Tất cả</option>
+                            @foreach ($categories as $category)
+                                <option value="{{ $category->id }}"
+                                    {{ request('category_id') == $category->id ? 'selected' : '' }}>
+                                    {{ $category->name }}
+                                </option>
+                            @endforeach
+                        </select>
+                    </div>
+                    <div class="col-md-4 d-flex gap-2">
+                        <button type="submit" class="btn btn-primary btn-lg flex-fill"><i
+                                class="fa-solid fa-filter me-2"></i>Lọc</button>
+                        <a href="{{ route('admin.products.index') }}" class="btn btn-outline-secondary btn-lg"><i
+                                class="fa-solid fa-rotate-right"></i></a>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Products Table -->
+        <div class="card shadow-sm">
+            <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+                <h5 class="mb-0 fw-semibold">
+                    <i class="fa-solid fa-list text-primary me-2"></i>Danh sách sản phẩm
+                    <span class="badge bg-primary fs-6">{{ $products->total() }} sản phẩm</span>
+                </h5>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead class="bg-light">
+                            <tr>
+                                <th class="text-center">#</th>
+                                <th>Sản phẩm</th>
+                                <th>Danh mục</th>
+                                <th class="text-center">Trạng thái</th>
+                                <th class="text-center">Giá</th>
+                                <th>Ngày tạo</th>
+                                <th class="text-center">Hành động</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @forelse($products as $product)
+                                <tr class="border-bottom align-middle">
+                                    <td class="text-center">{{ $loop->iteration }}</td>
+                                    <td class="d-flex align-items-center gap-3">
+                                        @php
+                                            $image =
+                                                optional($product->images()->wherePivot('is_main', true)->first())
+                                                    ->path ?? null;
+                                        @endphp
+                                        @if ($image)
+                                            <img src="{{ asset('storage/' . $image) }}" class="rounded shadow-sm"
+                                                style="width:50px;height:50px;object-fit:cover">
+                                        @else
+                                            <div class="rounded bg-gradient-primary text-white d-flex justify-content-center align-items-center shadow-sm fw-bold"
+                                                style="width:50px;height:50px;font-size:20px;">
+                                                {{ strtoupper(substr($product->name ?? 'P', 0, 1)) }}
+                                            </div>
+                                        @endif
+                                        <div>
+                                            <div class="fw-bold">{{ $product->name }}</div>
+                                            <div class="text-muted small">{{ $product->sku }}</div>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        @foreach ($product->categories as $category)
+                                            <span class="badge bg-info">{{ $category->name }}</span>
+                                        @endforeach
+                                    </td>
+                                    <td class="text-center">
+                                        <span class="badge bg-{{ $product->status ? 'success' : 'secondary' }}">
+                                            {{ $product->status ? 'Hoạt động' : 'Vô hiệu' }}
+                                        </span>
+                                    </td>
+                                    <td class="text-center">{{ number_format($product->price, 0, ',', '.') }}₫</td>
+                                    <td>{{ $product->created_at->format('d/m/Y H:i') }}</td>
+                                    <td class="text-center">
+                                        <div class="btn-group">
+                                            <a href="{{ route('admin.products.show', $product->id) }}"
+                                                class="btn btn-outline-info btn-sm" title="Xem"><i
+                                                    class="fa-solid fa-eye"></i></a>
+                                            <a href="{{ route('admin.products.edit', $product->id) }}"
+                                                class="btn btn-outline-warning btn-sm" title="Sửa"><i
+                                                    class="fa-solid fa-pen"></i></a>
+                                            <form action="{{ route('admin.products.destroy', $product->id) }}"
+                                                method="POST" style="display:inline-block;">
+                                                @csrf
+                                                @method('DELETE')
+                                                <button type="submit" class="btn btn-outline-danger btn-sm"
+                                                    onclick="return confirm('Bạn có chắc muốn xóa sản phẩm này?')">
+                                                    <i class="fa-solid fa-trash"></i>
+                                                </button>
+                                            </form>
+                                        </div>
+                                    </td>
+                                </tr>
+                            @empty
+                                <tr>
+                                    <td colspan="7" class="text-center py-5 text-muted">
+                                        <i class="fa-solid fa-inbox fs-1 mb-3 opacity-50"></i>
+                                        <div>Không có sản phẩm nào</div>
+                                    </td>
+                                </tr>
+                            @endforelse
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            @if ($products->hasPages())
+                <div class="card-footer bg-white py-3 d-flex justify-content-between align-items-center">
+                    <div class="text-muted small">Hiển thị {{ $products->firstItem() }} - {{ $products->lastItem() }}
+                        trong {{ $products->total() }} sản phẩm</div>
+                    <div>{{ $products->links('components.pagination') }}</div>
+                </div>
+            @endif
+        </div>
+    </div>
+
+    <style>
+        .table tbody tr {
+            transition: all 0.2s ease;
+        }
+
+        .table tbody tr:hover {
+            background-color: #f8f9fa;
+            transform: scale(1.01);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .btn-group .btn {
+            transition: all 0.2s ease;
+        }
+
+        .btn-group .btn:hover {
+            transform: translateY(-2px);
+        }
+
+        .bg-gradient-primary {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+        }
+
+        .bg-gradient-success {
+            background: linear-gradient(135deg, #11998e, #38ef7d);
+        }
+
+        .bg-gradient-warning {
+            background: linear-gradient(135deg, #f093fb, #f5576c);
+        }
+
+        .bg-gradient-danger {
+            background: linear-gradient(135deg, #fa709a, #fee140);
+        }
+    </style>
+@endsection --}}
+
+
+
+{{-- Bản 2: đẹp  --}}
+
+@extends('layouts.admin')
+
+@section('title', 'Quản lý sản phẩm')
+
+@section('content')
+    <div class="container-fluid px-4">
+
+        <!-- Header -->
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <div>
+                <h2 class="fw-bold text-dark mb-1">
+                    <i class="fa-solid fa-boxes-stacked text-primary me-2"></i>Quản lý sản phẩm
+                </h2>
+                <nav aria-label="breadcrumb">
+                    <ol class="breadcrumb mb-0">
+                        <li class="breadcrumb-item"><a href="{{ route('admin.dashboard') }}">Dashboard</a></li>
+                        <li class="breadcrumb-item active">Sản phẩm</li>
+                    </ol>
+                </nav>
+            </div>
+            <a href="{{ route('admin.products.create') }}" class="btn btn-primary btn-lg shadow-sm">
+                <i class="fa-solid fa-plus me-2"></i>Thêm sản phẩm
+            </a>
+        </div>
+
+        <!-- Stats Cards -->
+        <div class="row g-3 mb-4">
+            @php
+                $stats = [
+                    [
+                        'title' => 'Tổng sản phẩm',
+                        'value' => $products->total(),
+                        'icon' => 'fa-boxes',
+                        'bg' => 'primary',
+                    ],
+                    ['title' => 'Còn hàng', 'value' => $inStockCount, 'icon' => 'fa-check', 'bg' => 'success'],
+                    [
+                        'title' => 'Hết hàng',
+                        'value' => $outOfStockCount,
+                        'icon' => 'fa-triangle-exclamation',
+                        'bg' => 'warning',
+                    ],
+                    [
+                        'title' => 'Tổng biến thể',
+                        'value' => $variantsCount,
+                        'icon' => 'fa-layer-group',
+                        'bg' => 'danger',
+                    ],
+                ];
+            @endphp
+
+            @foreach ($stats as $stat)
+                <div class="col-xl-3 col-md-6">
+                    <div
+                        class="card shadow-sm h-100 border-0 bg-gradient-{{ $stat['bg'] }} text-white position-relative overflow-hidden">
+                        <div class="card-body d-flex justify-content-between align-items-center">
+                            <div>
+                                <h6 class="text-white-50 mb-1">{{ $stat['title'] }}</h6>
+                                <h2 class="fw-bold mb-0">{{ $stat['value'] }}</h2>
+                            </div>
+                            <div class="fs-1 opacity-25"><i class="fa-solid {{ $stat['icon'] }}"></i></div>
+                        </div>
+                        <div class="position-absolute top-0 end-0 opacity-10" style="font-size:6rem;">
+                            <i class="fa-solid {{ $stat['icon'] }}"></i>
+                        </div>
+                    </div>
+                </div>
+            @endforeach
+        </div>
+
+        <!-- Filter -->
+        <div class="card shadow-sm mb-4 border-0">
+            <div class="card-header bg-white py-3">
+                <h5 class="mb-0 fw-semibold"><i class="fa-solid fa-filter text-primary me-2"></i>Bộ lọc nâng cao</h5>
+            </div>
+            <div class="card-body">
+                <form method="GET" action="{{ route('admin.products.index') }}" class="row g-3 align-items-end">
+                    <div class="col-md-3">
+                        <label class="form-label fw-semibold">Tìm kiếm</label>
+                        <input type="text" name="search" class="form-control form-control-lg"
+                            placeholder="Tên sản phẩm..." value="{{ request('search') }}">
+                    </div>
+                    <div class="col-md-2">
+                        <label class="form-label fw-semibold">Trạng thái</label>
+                        <select name="status"
+                            class="form-select form-select-lg @if (request('status') != '') border-primary border-2 @endif">
+                            <option value="">Tất cả</option>
+                            <option value="1" {{ request('status') == '1' ? 'selected' : '' }}>Hoạt động</option>
+                            <option value="0" {{ request('status') == '0' ? 'selected' : '' }}>Vô hiệu hóa</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label fw-semibold">Danh mục</label>
+                        <select name="category_id"
+                            class="form-select form-select-lg @if (request('category_id')) border-primary border-2 @endif">
+                            <option value="">Tất cả</option>
+                            @foreach ($categories as $category)
+                                <option value="{{ $category->id }}"
+                                    {{ request('category_id') == $category->id ? 'selected' : '' }}>
+                                    {{ $category->name }}
+                                </option>
+                            @endforeach
+                        </select>
+                    </div>
+                    <div class="col-md-4 d-flex gap-2">
+                        <button type="submit" class="btn btn-primary btn-lg flex-fill"><i
+                                class="fa-solid fa-filter me-2"></i>Lọc</button>
+                        <a href="{{ route('admin.products.index') }}" class="btn btn-outline-secondary btn-lg flex-fill"><i
+                                class="fa-solid fa-rotate-right me-2"></i>Đặt lại</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Products Table -->
+        <div class="card shadow-sm border-0">
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0 text-center">
+                        <thead class="bg-light text-dark">
+                            <tr>
+                                <th>#</th>
+                                <th>Sản phẩm</th>
+                                <th>Danh mục</th>
+                                <th>Trạng thái</th>
+                                <th>Giá</th>
+                                <th>Ngày tạo</th>
+                                <th>Hành động</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @forelse($products as $product)
+                                <tr class="border-bottom align-middle">
+                                    <td>{{ $loop->iteration }}</td>
+                                    <td class="d-flex align-items-center gap-3 text-start">
+                                        @php
+                                            $image = optional($product->images()->wherePivot('is_main', true)->first())
+                                                ->path;
+                                        @endphp
+                                        @if ($image)
+                                            <img src="{{ asset('storage/' . $image) }}" class="rounded shadow-sm"
+                                                style="width:50px;height:50px;object-fit:cover">
+                                        @else
+                                            <div class="rounded bg-gradient-primary text-white d-flex justify-content-center align-items-center shadow-sm fw-bold"
+                                                style="width:50px;height:50px;font-size:20px;">
+                                                {{ strtoupper(substr($product->name ?? 'P', 0, 1)) }}
+                                            </div>
+                                        @endif
+                                        <div class="text-start">
+                                            <div class="fw-bold">{{ $product->name }}</div>
+                                            <div class="text-muted small">{{ $product->sku }}</div>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        @foreach ($product->categories as $category)
+                                            <span class="badge bg-info me-1">{{ $category->name }}</span>
+                                        @endforeach
+                                    </td>
+                                    <td>
+                                        <span
+                                            class="badge rounded-pill bg-gradient-{{ $product->status ? 'success' : 'secondary' }}">
+                                            {{ $product->status ? 'Hoạt động' : 'Vô hiệu' }}
+                                        </span>
+                                    </td>
+                                    <td class="fw-semibold">{{ number_format($product->price, 0, ',', '.') }}₫</td>
+                                    <td>{{ $product->created_at->format('d/m/Y') }}</td>
+                                    <td>
+                                        <div class="btn-group">
+                                            <a href="{{ route('admin.products.show', $product->id) }}"
+                                                class="btn btn-outline-info btn-sm" title="Xem"><i
+                                                    class="fa-solid fa-eye"></i></a>
+                                            <a href="{{ route('admin.products.edit', $product->id) }}"
+                                                class="btn btn-outline-warning btn-sm" title="Sửa"><i
+                                                    class="fa-solid fa-pen"></i></a>
+                                            <form action="{{ route('admin.products.destroy', $product->id) }}"
+                                                method="POST" style="display:inline-block;">
+                                                @csrf
+                                                @method('DELETE')
+                                                <button type="submit" class="btn btn-outline-danger btn-sm"
+                                                    onclick="return confirm('Bạn có chắc muốn xóa sản phẩm này?')">
+                                                    <i class="fa-solid fa-trash"></i>
+                                                </button>
+                                            </form>
+                                        </div>
+                                    </td>
+                                </tr>
+                            @empty
+                                <tr>
+                                    <td colspan="7" class="py-5 text-muted text-center">
+                                        <i class="fa-solid fa-inbox fs-1 mb-3 opacity-25"></i>
+                                        <div>Không có sản phẩm nào</div>
+                                    </td>
+                                </tr>
+                            @endforelse
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            @if ($products->hasPages())
+                <div class="card-footer bg-white py-3 d-flex justify-content-between align-items-center">
+                    <div class="text-muted small">Hiển thị {{ $products->firstItem() }} - {{ $products->lastItem() }}
+                        trong {{ $products->total() }} sản phẩm</div>
+                    <div>{{ $products->links('components.pagination') }}</div>
+                </div>
+            @endif
+        </div>
+    </div>
+
+    <style>
+        /* Table hover effect */
+        .table tbody tr {
+            transition: all 0.25s ease;
+            cursor: pointer;
+        }
+
+        .table tbody tr:hover {
+            background-color: #f1f3f5;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+        }
+
+        /* Gradient badges */
+        .bg-gradient-primary {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+        }
+
+        .bg-gradient-success {
+            background: linear-gradient(135deg, #11998e, #38ef7d);
+        }
+
+        .bg-gradient-warning {
+            background: linear-gradient(135deg, #f093fb, #f5576c);
+        }
+
+        .bg-gradient-danger {
+            background: linear-gradient(135deg, #fa709a, #fee140);
+        }
+
+        .badge {
+            font-size: 0.8rem;
+        }
+
+        /* Buttons hover */
+        .btn-group .btn {
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .btn-group .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+        }
+
+        /* Responsive fix for table */
+        .table-responsive {
+            overflow-x: auto;
+        }
+    </style>
+@endsection
+
+
+{{-- Bản 3:Cards thống kê đẹp, gradient, hover animation + live counter
+
+Filter realtime (Ajax) với multi-select category + search + trạng thái + email verified
+
+Table hiện đại với avatar, badges gradient, hover row, buttons animation
+
+Pagination chuẩn
+
+Tooltip và select2 cho dropdown --}}
+
+{{-- 
+@extends('layouts.admin')
+
+@section('title', 'Quản lý sản phẩm')
+
+@section('content')
+    <div class="container-fluid px-4">
+
+        <!-- Header & Breadcrumb -->
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <div>
+                <h2 class="fw-bold text-dark mb-1">
+                    <i class="fa-solid fa-boxes-stacked text-primary me-2"></i>Quản lý sản phẩm
+                </h2>
+                <nav aria-label="breadcrumb">
+                    <ol class="breadcrumb mb-0">
+                        <li class="breadcrumb-item"><a href="{{ route('admin.dashboard') }}">Dashboard</a></li>
+                        <li class="breadcrumb-item active">Sản phẩm</li>
+                    </ol>
+                </nav>
+            </div>
+            <a href="{{ route('admin.products.create') }}" class="btn btn-primary btn-lg shadow-sm">
+                <i class="fa-solid fa-plus me-2"></i>Thêm sản phẩm
+            </a>
+        </div>
+
+        <!-- Filter -->
+        <div class="card shadow-sm mb-4">
+            <div class="card-header bg-white py-3">
+                <h5 class="mb-0 fw-semibold"><i class="fa-solid fa-filter text-primary me-2"></i>Bộ lọc</h5>
+            </div>
+            <div class="card-body">
+                <form id="filterForm" method="GET" action="{{ route('admin.products.index') }}"
+                    class="row g-3 align-items-end">
+                    <div class="col-md-3">
+                        <label class="form-label fw-semibold">Tìm kiếm</label>
+                        <input type="text" name="search" class="form-control form-control-lg"
+                            placeholder="Tên sản phẩm..." value="{{ request('search') }}">
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label fw-semibold">Danh mục</label>
+                        <select name="category_id" class="form-select form-select-lg">
+                            <option value="">Tất cả</option>
+                            @foreach ($categories as $category)
+                                <option value="{{ $category->id }}"
+                                    {{ request('category_id') == $category->id ? 'selected' : '' }}>{{ $category->name }}
+                                </option>
+                            @endforeach
+                        </select>
+                    </div>
+                    <div class="col-md-2">
+                        <label class="form-label fw-semibold">Trạng thái</label>
+                        <select name="status" class="form-select form-select-lg">
+                            <option value="">Tất cả</option>
+                            <option value="1" {{ request('status') == '1' ? 'selected' : '' }}>Hoạt động</option>
+                            <option value="0" {{ request('status') == '0' ? 'selected' : '' }}>Vô hiệu hóa</option>
+                        </select>
+                    </div>
+                    <div class="col-md-4 d-flex gap-2">
+                        <button type="submit" class="btn btn-primary btn-lg flex-fill"><i
+                                class="fa-solid fa-filter me-2"></i>Lọc</button>
+                        <a href="{{ route('admin.products.index') }}" class="btn btn-outline-secondary btn-lg flex-fill"><i
+                                class="fa-solid fa-rotate-right me-2"></i>Làm mới</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Products Grid -->
+        <div id="productsGrid" class="row g-4">
+            @forelse($products as $product)
+                <div class="col-xl-3 col-lg-4 col-md-6">
+                    <div class="card h-100 shadow-sm border-0">
+                        @php
+                            $image = optional($product->images()->wherePivot('is_main', true)->first())->path;
+                        @endphp
+                        @if ($image)
+                            <img src="{{ asset('storage/' . $image) }}" class="card-img-top"
+                                style="height:200px; object-fit:cover;">
+                        @else
+                            <div class="bg-secondary d-flex justify-content-center align-items-center"
+                                style="height:200px; color:white; font-size:2rem;">
+                                {{ strtoupper(substr($product->name, 0, 1)) }}
+                            </div>
+                        @endif
+
+                        <div class="card-body d-flex flex-column">
+                            <h5 class="card-title fw-bold">{{ $product->name }}</h5>
+                            <p class="text-muted small mb-2">Danh mục:
+                                @foreach ($product->categories as $cat)
+                                    <span class="badge bg-info">{{ $cat->name }}</span>
+                                @endforeach
+                            </p>
+                            <p class="mb-2"><strong>Giá:</strong> {{ number_format($product->price, 0, ',', '.') }} ₫</p>
+                            <p class="mb-2">
+                                <strong>Trạng thái:</strong>
+                                @if ($product->status)
+                                    <span class="badge bg-success">Hoạt động</span>
+                                @else
+                                    <span class="badge bg-warning text-dark">Vô hiệu</span>
+                                @endif
+                                @if ($product->total_stock === 0)
+                                    <span class="badge bg-danger">Hết hàng</span>
+                                @endif
+                            </p>
+                            <div class="mt-auto d-flex justify-content-between">
+                                <a href="{{ route('admin.products.show', $product->id) }}"
+                                    class="btn btn-outline-info btn-sm" title="Xem"><i class="fa-solid fa-eye"></i></a>
+                                <a href="{{ route('admin.products.edit', $product->id) }}"
+                                    class="btn btn-outline-warning btn-sm" title="Sửa"><i
+                                        class="fa-solid fa-pen"></i></a>
+                                <form action="{{ route('admin.products.destroy', $product->id) }}" method="POST"
+                                    onsubmit="return confirm('Bạn có chắc muốn xóa {{ $product->name }}?')">
+                                    @csrf
+                                    @method('DELETE')
+                                    <button class="btn btn-outline-danger btn-sm" title="Xóa"><i
+                                            class="fa-solid fa-trash"></i></button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            @empty
+                <div class="col-12 text-center py-5 text-muted">
+                    <i class="fa-solid fa-box-open fs-1 mb-3 opacity-50"></i>
+                    <div>Không có sản phẩm nào</div>
+                </div>
+            @endforelse
+        </div>
+
+        <!-- Pagination -->
+        <div class="mt-4 d-flex justify-content-between align-items-center">
+            <div class="text-muted small">Hiển thị {{ $products->firstItem() }} - {{ $products->lastItem() }} trong
+                {{ $products->total() }} sản phẩm</div>
+            <div>{{ $products->links('components.pagination') }}</div>
+        </div>
+    </div>
+
+    <style>
+        .card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+            transition: all 0.3s ease;
+        }
+
+        .badge {
+            font-size: 0.8rem;
+        }
+    </style>
+@endsection --}}
+
+
+
+
+{{-- @extends('layouts.admin')
+@section('title', 'Quản lý sản phẩm')
+
+@section('content')
+    <div class="container-fluid px-4">
+
+        <!-- Header + Filter -->
+        <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap">
+            <h2 class="fw-bold text-dark mb-2"><i class="fa-solid fa-boxes-stacked text-primary me-2"></i>Quản lý sản phẩm
+            </h2>
+            <a href="{{ route('admin.products.create') }}" class="btn btn-primary btn-lg"><i
+                    class="fa-solid fa-plus me-2"></i>Thêm sản phẩm</a>
+        </div>
+
+        <!-- Filter Form -->
+        <div class="card shadow-sm mb-4">
+            <div class="card-body">
+                <form method="GET" action="{{ route('admin.products.index') }}" class="row g-3 align-items-end">
+                    <div class="col-md-3">
+                        <label class="form-label fw-semibold">Tìm kiếm</label>
+                        <input type="text" name="search" class="form-control form-control-lg"
+                            placeholder="Tên sản phẩm..." value="{{ request('search') }}">
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label fw-semibold">Danh mục</label>
+                        <select name="category_id" class="form-select form-select-lg">
+                            <option value="">Tất cả</option>
+                            @foreach ($categories as $cat)
+                                <option value="{{ $cat->id }}"
+                                    {{ request('category_id') == $cat->id ? 'selected' : '' }}>{{ $cat->name }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+                    <div class="col-md-2">
+                        <label class="form-label fw-semibold">Trạng thái</label>
+                        <select name="status" class="form-select form-select-lg">
+                            <option value="">Tất cả</option>
+                            <option value="1" {{ request('status') == '1' ? 'selected' : '' }}>Hoạt động</option>
+                            <option value="0" {{ request('status') == '0' ? 'selected' : '' }}>Ẩn</option>
+                        </select>
+                    </div>
+                    <div class="col-md-4 d-flex gap-2 flex-wrap">
+                        <button type="submit" class="btn btn-primary btn-lg flex-fill"><i
+                                class="fa-solid fa-filter me-2"></i>Lọc</button>
+                        <a href="{{ route('admin.products.index') }}" class="btn btn-outline-secondary btn-lg flex-fill"><i
+                                class="fa-solid fa-rotate-right me-2"></i>Reset</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Products Grid -->
+        <div class="row g-4">
+            @forelse($products as $product)
+                <div class="col-xl-3 col-lg-4 col-md-6">
+                    <div class="card product-card shadow-sm h-100 border-0">
+                        @php
+                            $mainImage =
+                                optional($product->images()->wherePivot('is_main', true)->first())->path ??
+                                optional($product->images->first())->path;
+                        @endphp
+                        <img src="{{ $mainImage ? asset('storage/' . $mainImage) : 'https://via.placeholder.com/400x300?text=No+Image' }}"
+                            class="card-img-top" style="height:200px; object-fit:cover;">
+
+                        <!-- Overlay Info -->
+                        <div class="card-overlay d-flex flex-column justify-content-between p-3">
+                            <div>
+                                <span class="badge bg-warning text-dark me-1">{{ $product->reviews->count() }} đánh
+                                    giá</span>
+                                <span
+                                    class="badge {{ $product->total_stock > 0 ? 'bg-success' : 'bg-danger' }}">{{ $product->total_stock > 0 ? 'Còn hàng' : 'Hết hàng' }}</span>
+                            </div>
+                            <div class="d-flex justify-content-end gap-2">
+                                <a href="{{ route('admin.products.show', $product->id) }}"
+                                    class="btn btn-sm btn-outline-light" title="Xem"><i class="fa-solid fa-eye"></i></a>
+                                <a href="{{ route('admin.products.edit', $product->id) }}"
+                                    class="btn btn-sm btn-outline-light" title="Sửa"><i class="fa-solid fa-pen"></i></a>
+                                <button type="button" class="btn btn-sm btn-outline-light btn-delete"
+                                    data-action="{{ route('admin.products.destroy', $product->id) }}"
+                                    data-name="{{ $product->name }}"><i class="fa-solid fa-trash"></i></button>
+                            </div>
+                        </div>
+
+                        <div class="card-body d-flex flex-column">
+                            <h5 class="card-title fw-bold">{{ $product->name }}</h5>
+                            <p class="text-muted mb-2">
+                                @foreach ($product->categories as $cat)
+                                    <span class="badge bg-info text-dark">{{ $cat->name }}</span>
+                                @endforeach
+                            </p>
+                            <p class="fw-bold mb-2">Giá: {{ number_format($product->price) }} ₫</p>
+
+                            <div class="mt-auto d-flex gap-3">
+                                <label class="form-check form-switch mb-0">
+                                    <input class="form-check-input toggle-status" type="checkbox"
+                                        data-id="{{ $product->id }}" {{ $product->status ? 'checked' : '' }}>
+                                    <span class="form-check-label">Hoạt động</span>
+                                </label>
+                                <label class="form-check form-switch mb-0">
+                                    <input class="form-check-input toggle-stock" type="checkbox"
+                                        data-id="{{ $product->id }}" {{ $product->total_stock > 0 ? 'checked' : '' }}>
+                                    <span class="form-check-label">Còn hàng</span>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            @empty
+                <div class="col-12 text-center py-5 text-muted">
+                    <i class="fa-solid fa-boxes-stacked fs-1 mb-3 opacity-50"></i>
+                    <div>Không có sản phẩm nào</div>
+                </div>
+            @endforelse
+        </div>
+
+        <!-- Pagination -->
+        <div class="mt-4 d-flex justify-content-center">
+            {{ $products->links('components.pagination') }}
+        </div>
+    </div>
+
+    @push('scripts')
+        <script>
+            document.addEventListener('DOMContentLoaded', function() {
+                // Toggle status
+                document.querySelectorAll('.toggle-status').forEach(input => {
+                    input.addEventListener('change', function() {
+                        fetch(`/admin/products/${this.dataset.id}/toggle-status`, {
+                            method: 'PATCH',
+                            headers: {
+                                'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                                'Content-Type': 'application/json'
+                            },
+                            body: JSON.stringify({
+                                status: this.checked ? 1 : 0
+                            })
+                        });
+                    });
+                });
+                // Toggle stock
+                document.querySelectorAll('.toggle-stock').forEach(input => {
+                    input.addEventListener('change', function() {
+                        fetch(`/admin/products/${this.dataset.id}/toggle-stock`, {
+                            method: 'PATCH',
+                            headers: {
+                                'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                                'Content-Type': 'application/json'
+                            },
+                            body: JSON.stringify({
+                                in_stock: this.checked ? 1 : 0
+                            })
+                        });
+                    });
+                });
+                // Delete product
+                document.querySelectorAll('.btn-delete').forEach(btn => {
+                    btn.addEventListener('click', function() {
+                        if (confirm(`Bạn có chắc muốn xóa sản phẩm "${this.dataset.name}" không?`)) {
+                            fetch(this.dataset.action, {
+                                method: 'DELETE',
+                                headers: {
+                                    'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                                }
+                            }).then(() => location.reload());
+                        }
+                    });
+                });
+            });
+        </script>
+    @endpush
+
+    <style>
+        .product-card {
+            transition: all 0.3s ease;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .product-card:hover {
+            transform: scale(1.03);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+        }
+
+        .card-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.4);
+            color: #fff;
+            padding: 0.75rem;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            opacity: 0;
+            transition: 0.3s;
+        }
+
+        .product-card:hover .card-overlay {
+            opacity: 1;
+        }
+
+        .card-overlay .btn {
+            padding: 0.25rem 0.5rem;
+            font-size: 0.8rem;
+        }
+    </style>
+@endsection --}}
+
+
+{{-- Bản 4 --}}
+{{-- @extends('layouts.admin')
+@section('title', 'Quản lý sản phẩm')
+
+@section('content')
+    <div class="container-fluid px-4">
+
+        <!-- Header + Filter -->
+        <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap">
+            <h2 class="fw-bold text-dark mb-2">
+                <i class="fa-solid fa-boxes-stacked text-primary me-2"></i>Quản lý sản phẩm
+            </h2>
+            <a href="{{ route('admin.products.create') }}" class="btn btn-primary btn-lg">
+                <i class="fa-solid fa-plus me-2"></i>Thêm sản phẩm
+            </a>
+        </div>
+
+        <!-- Filter Form -->
+        <div class="card shadow-sm mb-4">
+            <div class="card-body">
+                <form method="GET" action="{{ route('admin.products.index') }}" class="row g-3 align-items-end">
+                    <div class="col-md-3">
+                        <label class="form-label fw-semibold">Tìm kiếm</label>
+                        <input type="text" name="search" class="form-control form-control-lg"
+                            placeholder="Tên sản phẩm..." value="{{ request('search') }}">
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label fw-semibold">Danh mục</label>
+                        <select name="category_id" class="form-select form-select-lg">
+                            <option value="">Tất cả</option>
+                            @foreach ($categories as $cat)
+                                <option value="{{ $cat->id }}"
+                                    {{ request('category_id') == $cat->id ? 'selected' : '' }}>{{ $cat->name }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+                    <div class="col-md-2">
+                        <label class="form-label fw-semibold">Trạng thái</label>
+                        <select name="status" class="form-select form-select-lg">
+                            <option value="">Tất cả</option>
+                            <option value="1" {{ request('status') == '1' ? 'selected' : '' }}>Hoạt động</option>
+                            <option value="0" {{ request('status') == '0' ? 'selected' : '' }}>Ẩn</option>
+                        </select>
+                    </div>
+                    <div class="col-md-4 d-flex gap-2 flex-wrap">
+                        <button type="submit" class="btn btn-primary btn-lg flex-fill">
+                            <i class="fa-solid fa-filter me-2"></i>Lọc
+                        </button>
+                        <a href="{{ route('admin.products.index') }}" class="btn btn-outline-secondary btn-lg flex-fill">
+                            <i class="fa-solid fa-rotate-right me-2"></i>Reset
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Products Grid -->
+        <div class="row g-4">
+            @forelse($products as $product)
+                <div class="col-xl-3 col-lg-4 col-md-6 col-sm-12">
+                    <div class="card product-card shadow-sm h-100 border-0 position-relative">
+
+                        @php
+                            $mainImage =
+                                optional($product->images()->wherePivot('is_main', true)->first())->path ??
+                                optional($product->images->first())->path;
+                        @endphp
+
+                        <img src="{{ $mainImage ? asset('storage/' . $mainImage) : 'https://via.placeholder.com/400x300?text=No+Image' }}"
+                            class="card-img-top" style="height:200px; object-fit:cover;">
+
+                        <!-- Overlay Info -->
+                        <div class="card-overlay d-flex flex-column justify-content-between p-3">
+                            <div class="d-flex justify-content-between align-items-start mb-1">
+                                <span class="badge bg-warning text-dark me-1">{{ $product->reviews->count() }} đánh
+                                    giá</span>
+                                <span class="badge {{ $product->total_stock > 0 ? 'bg-success' : 'bg-danger' }}">
+                                    {{ $product->total_stock > 0 ? 'Còn hàng' : 'Hết hàng' }}
+                                </span>
+                            </div>
+                            <div class="d-flex justify-content-end gap-2">
+                                <a href="{{ route('admin.products.show', $product->id) }}"
+                                    class="btn btn-sm btn-outline-light" title="Xem"><i class="fa-solid fa-eye"></i></a>
+                                <a href="{{ route('admin.products.edit', $product->id) }}"
+                                    class="btn btn-sm btn-outline-light" title="Sửa"><i class="fa-solid fa-pen"></i></a>
+                                <button type="button" class="btn btn-sm btn-outline-light btn-delete"
+                                    data-action="{{ route('admin.products.destroy', $product->id) }}"
+                                    data-name="{{ $product->name }}" title="Xóa"><i
+                                        class="fa-solid fa-trash"></i></button>
+                            </div>
+                        </div>
+
+                        <div class="card-body d-flex flex-column">
+                            <h5 class="card-title fw-bold">{{ $product->name }}</h5>
+                            <p class="text-muted mb-2">
+                                @foreach ($product->categories as $cat)
+                                    <span class="badge bg-info text-dark">{{ $cat->name }}</span>
+                                @endforeach
+                            </p>
+                            <p class="fw-bold mb-2">Giá: {{ number_format($product->price) }} ₫</p>
+
+                            <!-- Status / Stock Toggle -->
+                            <div class="mt-auto d-flex gap-3">
+                                <label class="form-check form-switch mb-0">
+                                    <input class="form-check-input toggle-status" type="checkbox"
+                                        data-id="{{ $product->id }}" {{ $product->status ? 'checked' : '' }}>
+                                    <span class="form-check-label">Hoạt động</span>
+                                </label>
+                                <label class="form-check form-switch mb-0">
+                                    <input class="form-check-input toggle-stock" type="checkbox"
+                                        data-id="{{ $product->id }}" {{ $product->total_stock > 0 ? 'checked' : '' }}>
+                                    <span class="form-check-label">Còn hàng</span>
+                                </label>
+                            </div>
+
+                            <!-- Tooltip Info -->
+                            <div class="product-tooltip mt-2">
+                                <strong>Chi tiết:</strong>
+                                <ul class="mb-0 ps-3">
+                                    <li>Giá: {{ number_format($product->price) }} ₫</li>
+                                    <li>Stock: {{ $product->total_stock }}</li>
+                                    <li>Đánh giá: {{ $product->reviews->count() }}</li>
+                                    <li>Trạng thái: {{ $product->status ? 'Hoạt động' : 'Ẩn' }}</li>
+                                </ul>
+                            </div>
+
+                        </div>
+                    </div>
+                </div>
+            @empty
+                <div class="col-12 text-center py-5 text-muted">
+                    <i class="fa-solid fa-boxes-stacked fs-1 mb-3 opacity-50"></i>
+                    <div>Không có sản phẩm nào</div>
+                </div>
+            @endforelse
+        </div>
+
+        <!-- Pagination -->
+        <div class="mt-4 d-flex justify-content-center">
+            {{ $products->links('components.pagination') }}
+        </div>
+    </div>
+
+    @push('scripts')
+        <script>
+            document.addEventListener('DOMContentLoaded', function() {
+                // Toggle status
+                document.querySelectorAll('.toggle-status').forEach(input => {
+                    input.addEventListener('change', function() {
+                        fetch(`/admin/products/${this.dataset.id}/toggle-status`, {
+                            method: 'PATCH',
+                            headers: {
+                                'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                                'Content-Type': 'application/json'
+                            },
+                            body: JSON.stringify({
+                                status: this.checked ? 1 : 0
+                            })
+                        });
+                    });
+                });
+                // Toggle stock
+                document.querySelectorAll('.toggle-stock').forEach(input => {
+                    input.addEventListener('change', function() {
+                        fetch(`/admin/products/${this.dataset.id}/toggle-stock`, {
+                            method: 'PATCH',
+                            headers: {
+                                'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                                'Content-Type': 'application/json'
+                            },
+                            body: JSON.stringify({
+                                in_stock: this.checked ? 1 : 0
+                            })
+                        });
+                    });
+                });
+                // Delete product with confirm
+                document.querySelectorAll('.btn-delete').forEach(btn => {
+                    btn.addEventListener('click', function() {
+                        if (confirm(`Bạn có chắc muốn xóa sản phẩm "${this.dataset.name}" không?`)) {
+                            fetch(this.dataset.action, {
+                                method: 'DELETE',
+                                headers: {
+                                    'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                                }
+                            }).then(() => location.reload());
+                        }
+                    });
+                });
+            });
+        </script>
+    @endpush --}}
+
+{{-- <style>
+        .product-card {
+            position: relative;
+            overflow: hidden;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .product-card:hover {
+            transform: scale(1.04);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25);
+        }
+
+        .card-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.45);
+            color: #fff;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            padding: 0.75rem;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+
+        .product-card:hover .card-overlay {
+            opacity: 1;
+        }
+
+        .product-tooltip {
+            display: none;
+            position: absolute;
+            top: 0;
+            right: 0;
+            background: rgba(0, 0, 0, 0.85);
+            color: #fff;
+            padding: 0.5rem 0.75rem;
+            border-radius: 0.25rem;
+            font-size: 0.8rem;
+            z-index: 10;
+        }
+
+        .product-card:hover .product-tooltip {
+            display: block;
+        }
+
+        .product-tooltip ul {
+            margin: 0;
+            padding-left: 1rem;
+        }
+    </style> --}}
+{{-- <style>
+        /* Card chính */
+        .product-card {
+            position: relative;
+            overflow: hidden;
+            border-radius: 0.5rem;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            cursor: pointer;
+            background: #fff;
+        }
+
+        .product-card:hover {
+            transform: translateY(-5px) scale(1.05);
+            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.25);
+        }
+
+        /* Gradient overlay hover */
+        .product-card::before {
+            content: "";
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, rgba(255, 0, 150, 0.2), rgba(0, 204, 255, 0.2));
+            opacity: 0;
+            transition: opacity 0.4s ease;
+            z-index: 1;
+        }
+
+        .product-card:hover::before {
+            opacity: 1;
+        }
+
+        /* Overlay info */
+        .card-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.4);
+            color: #fff;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            padding: 0.75rem;
+            z-index: 2;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .product-card:hover .card-overlay {
+            opacity: 1;
+        }
+
+        /* Tooltip fade in/out */
+        .product-tooltip {
+            position: absolute;
+            top: 0;
+            right: 0;
+            background: rgba(0, 0, 0, 0.85);
+            color: #fff;
+            padding: 0.5rem 0.75rem;
+            border-radius: 0.25rem;
+            font-size: 0.8rem;
+            opacity: 0;
+            transform: translateY(-5px);
+            transition: opacity 0.3s ease, transform 0.3s ease;
+            z-index: 3;
+        }
+
+        .product-card:hover .product-tooltip {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        /* Card image transition */
+        .card-img-top {
+            transition: transform 0.4s ease;
+        }
+
+        .product-card:hover .card-img-top {
+            transform: scale(1.08);
+        }
+
+        /* Status Badge Pulse */
+        .badge-stock {
+            animation: pulse 2s infinite;
+            font-weight: 600;
+        }
+
+        @keyframes pulse {
+            0% {
+                transform: scale(1);
+                opacity: 0.9;
+            }
+
+            50% {
+                transform: scale(1.1);
+                opacity: 1;
+            }
+
+            100% {
+                transform: scale(1);
+                opacity: 0.9;
+            }
+        }
+
+        /* Buttons hover */
+        .btn-outline-light:hover {
+            background: #fff;
+            color: #000;
+            transform: translateY(-2px);
+            transition: all 0.3s;
+        }
+    </style>
+
+@endsection --}}
+
+
+
+{{-- @extends('layouts.admin')
+@section('title', 'Quản lý sản phẩm')
+
+@section('content')
+    <div class="container-fluid px-4">
+
+        <!-- Header -->
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h2 class="fw-bold text-dark mb-0">
+                <i class="fa-solid fa-boxes-stacked text-primary me-2"></i>Quản lý sản phẩm
+            </h2>
+            <a href="{{ route('admin.products.create') }}" class="btn btn-primary btn-lg">
+                <i class="fa-solid fa-plus me-2"></i>Thêm sản phẩm
+            </a>
+        </div>
+
+        <!-- Filter Form -->
+        <div class="card shadow-sm mb-4">
+            <div class="card-body">
+                <form method="GET" action="{{ route('admin.products.index') }}" class="row g-3 align-items-end">
+                    <div class="col-md-3">
+                        <label class="form-label fw-semibold">Tìm kiếm</label>
+                        <input type="text" name="search" class="form-control form-control-lg"
+                            placeholder="Tên sản phẩm..." value="{{ request('search') }}">
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label fw-semibold">Danh mục</label>
+                        <select name="category_id" class="form-select form-select-lg">
+                            <option value="">Tất cả</option>
+                            @foreach ($categories as $cat)
+                                <option value="{{ $cat->id }}"
+                                    {{ request('category_id') == $cat->id ? 'selected' : '' }}>
+                                    {{ $cat->name }}
+                                </option>
+                            @endforeach
+                        </select>
+                    </div>
+                    <div class="col-md-2">
+                        <label class="form-label fw-semibold">Trạng thái</label>
+                        <select name="status" class="form-select form-select-lg">
+                            <option value="">Tất cả</option>
+                            <option value="1" {{ request('status') == '1' ? 'selected' : '' }}>Hoạt động</option>
+                            <option value="0" {{ request('status') == '0' ? 'selected' : '' }}>Ẩn</option>
+                        </select>
+                    </div>
+                    <div class="col-md-4 d-flex gap-2">
+                        <button type="submit" class="btn btn-primary btn-lg flex-fill">
+                            <i class="fa-solid fa-filter me-2"></i>Lọc
+                        </button>
+                        <a href="{{ route('admin.products.index') }}" class="btn btn-outline-secondary btn-lg flex-fill">
+                            <i class="fa-solid fa-rotate-right me-2"></i>Reset
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Products Grid -->
+        <div class="row g-4">
+            @forelse($products as $product)
+                @php
+                    $mainImage =
+                        optional($product->images()->wherePivot('is_main', true)->first())->path ??
+                        optional($product->images->first())->path;
+                    // Badge color theo tồn kho
+                    $stockClass =
+                        $product->total_stock == 0
+                            ? 'bg-danger'
+                            : ($product->total_stock <= 20
+                                ? 'bg-warning text-dark'
+                                : 'bg-success');
+                @endphp
+                <div class="col-xl-3 col-lg-4 col-md-6">
+                    <div class="card shadow-sm h-100 border-0 position-relative overflow-hidden">
+                        <img src="{{ $mainImage ? asset('storage/' . $mainImage) : 'https://via.placeholder.com/400x300?text=No+Image' }}"
+                            class="card-img-top" style="height:200px; object-fit:cover">
+
+                        <!-- Overlay info -->
+                        <div
+                            class="card-overlay position-absolute top-0 start-0 w-100 h-100 d-flex flex-column justify-content-end p-3">
+                            <span class="badge bg-warning text-dark mb-1">{{ $product->reviews->count() }} đánh giá</span>
+                            <span
+                                class="badge {{ $stockClass }}">{{ $product->total_stock > 0 ? $product->total_stock . ' còn hàng' : 'Hết hàng' }}</span>
+                        </div>
+
+                        <div class="card-body d-flex flex-column">
+                            <h5 class="card-title fw-bold">{{ $product->name }}</h5>
+                            <p class="card-text text-muted mb-2">
+                                @foreach ($product->categories as $cat)
+                                    <span class="badge bg-info text-dark">{{ $cat->name }}</span>
+                                @endforeach
+                            </p>
+                            <p class="fw-bold mb-2">Giá: {{ number_format($product->price) }} ₫</p>
+
+                            <!-- Status / Stock Toggle -->
+                            <div class="mb-2">
+                                <label class="form-check form-switch d-inline-block me-3">
+                                    <input class="form-check-input toggle-status" type="checkbox"
+                                        data-id="{{ $product->id }}" {{ $product->status ? 'checked' : '' }}>
+                                    <span class="form-check-label">Hoạt động</span>
+                                </label>
+                                <label class="form-check form-switch d-inline-block">
+                                    <input class="form-check-input toggle-stock" type="checkbox"
+                                        data-id="{{ $product->id }}" {{ $product->total_stock > 0 ? 'checked' : '' }}>
+                                    <span class="form-check-label">Còn hàng</span>
+                                </label>
+                            </div>
+
+                            <!-- Action Buttons -->
+                            <div class="mt-auto d-flex justify-content-between">
+                                <a href="{{ route('admin.products.show', $product->id) }}"
+                                    class="btn btn-outline-info btn-sm" title="Xem">
+                                    <i class="fa-solid fa-eye"></i>
+                                </a>
+                                <a href="{{ route('admin.products.edit', $product->id) }}"
+                                    class="btn btn-outline-warning btn-sm" title="Sửa">
+                                    <i class="fa-solid fa-pen"></i>
+                                </a>
+                                <button type="button" class="btn btn-outline-danger btn-sm btn-delete"
+                                    data-action="{{ route('admin.products.destroy', $product->id) }}"
+                                    data-name="{{ $product->name }}">
+                                    <i class="fa-solid fa-trash"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            @empty
+                <div class="col-12 text-center py-5 text-muted">
+                    <i class="fa-solid fa-boxes-stacked fs-1 mb-3 opacity-50"></i>
+                    <div>Không có sản phẩm nào</div>
+                </div>
+            @endforelse
+        </div>
+
+        <!-- Pagination -->
+        <div class="mt-4 d-flex justify-content-center">
+            {{ $products->links('components.pagination') }}
+        </div>
+    </div>
+
+    @push('scripts')
+        <script>
+            document.addEventListener('DOMContentLoaded', function() {
+                document.querySelectorAll('.toggle-status').forEach(input => {
+                    input.addEventListener('change', function() {
+                        fetch(`/admin/products/${this.dataset.id}/toggle-status`, {
+                            method: 'PATCH',
+                            headers: {
+                                'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                                'Content-Type': 'application/json'
+                            },
+                            body: JSON.stringify({
+                                status: this.checked ? 1 : 0
+                            })
+                        });
+                    });
+                });
+                document.querySelectorAll('.toggle-stock').forEach(input => {
+                    input.addEventListener('change', function() {
+                        fetch(`/admin/products/${this.dataset.id}/toggle-stock`, {
+                            method: 'PATCH',
+                            headers: {
+                                'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                                'Content-Type': 'application/json'
+                            },
+                            body: JSON.stringify({
+                                in_stock: this.checked ? 1 : 0
+                            })
+                        });
+                    });
+                });
+                document.querySelectorAll('.btn-delete').forEach(btn => {
+                    btn.addEventListener('click', function() {
+                        if (confirm(`Bạn có chắc muốn xóa sản phẩm "${this.dataset.name}" không?`)) {
+                            fetch(this.dataset.action, {
+                                method: 'DELETE',
+                                headers: {
+                                    'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                                }
+                            }).then(() => location.reload());
+                        }
+                    });
+                });
+            });
+        </script>
+    @endpush
+
+    <style>
+        .card {
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .card:hover {
+            transform: scale(1.03);
+            box-shadow: 0 6px 25px rgba(0, 0, 0, 0.15);
+        }
+
+        .card-overlay {
+            background: rgba(0, 0, 0, 0.4);
+            opacity: 0;
+            transition: 0.3s;
+            border-radius: 0.25rem;
+            color: white;
+            font-weight: 500;
+        }
+
+        .card:hover .card-overlay {
+            opacity: 1;
+        }
+
+        .btn-outline-danger:hover {
+            transform: translateY(-2px);
+        }
+
+        .badge-stock {
+            font-size: 0.85rem;
+        }
+    </style>
+@endsection --}}

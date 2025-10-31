@@ -1,0 +1,13 @@
+<div class="p-3">
+    <h4 class="text-white mb-4">Admin</h4>
+    <a href="{{ route('admin.dashboard') }}" class="{{ request()->routeIs('admin.dashboard') ? 'active' : '' }}">📊
+        Dashboard</a>
+    <a href="{{ route('admin.products.index') }}" class="{{ request()->routeIs('admin.products.*') ? 'active' : '' }}">🛒
+        Products</a>
+    <a href="{{ route('admin.categories.index') }}"
+        class="{{ request()->routeIs('admin.categories.*') ? 'active' : '' }}">📂 Categories</a>
+    <a href="{{ route('admin.orders.index') }}" class="{{ request()->routeIs('admin.orders.*') ? 'active' : '' }}">📦
+        Orders</a>
+    <a href="{{ route('admin.users.index') }}" class="{{ request()->routeIs('admin.users.*') ? 'active' : '' }}">👤
+        Users</a>
+</div>

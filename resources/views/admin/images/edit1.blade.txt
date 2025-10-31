@@ -1,0 +1,150 @@
+@extends('admin.layouts.app')
+
+@section('title', 'Chỉnh sửa ảnh')
+
+@section('content')
+    <div class="container-fluid">
+        <div class="mb-4">
+            <h1 class="h3 mb-0">Chỉnh sửa ảnh</h1>
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{{ route('admin.images.index') }}">Quản lý ảnh</a></li>
+                    <li class="breadcrumb-item active">Chỉnh sửa</li>
+                </ol>
+            </nav>
+        </div>
+
+        <div class="row">
+            <div class="col-lg-8">
+                <div class="card">
+                    <div class="card-body">
+                        <form action="{{ route('admin.images.update', $image) }}" method="POST"
+                            enctype="multipart/form-data">
+                            @csrf
+                            @method('PUT')
+
+                            <!-- Current Image -->
+                            <div class="mb-3">
+                                <label class="form-label">Ảnh hiện tại</label>
+                                <div>
+                                    <img src="{{ asset('storage/' . $image->path) }}" class="img-thumbnail"
+                                        style="max-width: 300px; max-height: 300px; object-fit: contain;"
+                                        alt="{{ $image->alt_text }}">
+                                </div>
+                            </div>
+
+                            <!-- Replace Image -->
+                            <div class="mb-3">
+                                <label class="form-label">Thay thế ảnh</label>
+                                <input type="file" name="image"
+                                    class="form-control @error('image') is-invalid @enderror" accept="image/*">
+                                @error('image')
+                                    <div class="invalid-feedback">{{ $message }}</div>
+                                @enderror
+                                <small class="form-text text-muted">
+                                    Để trống nếu không muốn thay đổi ảnh
+                                </small>
+                            </div>
+
+                            <!-- Type -->
+                            <div class="mb-3">
+                                <label class="form-label">Loại ảnh <span class="text-danger">*</span></label>
+                                <select name="type" class="form-select @error('type') is-invalid @enderror" required>
+                                    <option value="">-- Chọn loại --</option>
+                                    <option value="product" {{ old('type', $image->type) == 'product' ? 'selected' : '' }}>
+                                        Sản phẩm</option>
+                                    <option value="avatar" {{ old('type', $image->type) == 'avatar' ? 'selected' : '' }}>
+                                        Avatar</option>
+                                    <option value="banner" {{ old('type', $image->type) == 'banner' ? 'selected' : '' }}>
+                                        Banner</option>
+                                    <option value="blog" {{ old('type', $image->type) == 'blog' ? 'selected' : '' }}>Blog
+                                    </option>
+                                    <option value="category"
+                                        {{ old('type', $image->type) == 'category' ? 'selected' : '' }}>Danh mục</option>
+                                </select>
+                                @error('type')
+                                    <div class="invalid-feedback">{{ $message }}</div>
+                                @enderror
+                            </div>
+
+                            <!-- Alt Text -->
+                            <div class="mb-3">
+                                <label class="form-label">Mô tả ảnh (Alt Text)</label>
+                                <input type="text" name="alt_text"
+                                    class="form-control @error('alt_text') is-invalid @enderror"
+                                    value="{{ old('alt_text', $image->alt_text) }}" placeholder="Nhập mô tả cho ảnh">
+                                @error('alt_text')
+                                    <div class="invalid-feedback">{{ $message }}</div>
+                                @enderror
+                            </div>
+
+                            <!-- Is Active -->
+                            <div class="mb-3">
+                                <div class="form-check form-switch">
+                                    <input class="form-check-input" type="checkbox" name="is_active" id="isActive"
+                                        {{ old('is_active', $image->is_active) ? 'checked' : '' }}>
+                                    <label class="form-check-label" for="isActive">
+                                        Kích hoạt
+                                    </label>
+                                </div>
+                            </div>
+
+                            <!-- Buttons -->
+                            <div class="d-flex gap-2">
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="fas fa-save"></i> Cập nhật
+                                </button>
+                                <a href="{{ route('admin.images.index') }}" class="btn btn-secondary">
+                                    <i class="fas fa-times"></i> Hủy
+                                </a>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-lg-4">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="card-title mb-0">Thông tin ảnh</h5>
+                    </div>
+                    <div class="card-body">
+                        <dl class="row mb-0">
+                            <dt class="col-sm-5">ID:</dt>
+                            <dd class="col-sm-7">{{ $image->id }}</dd>
+
+                            <dt class="col-sm-5">Đường dẫn:</dt>
+                            <dd class="col-sm-7"><small>{{ $image->path }}</small></dd>
+
+                            <dt class="col-sm-5">Ngày tạo:</dt>
+                            <dd class="col-sm-7">{{ $image->created_at->format('d/m/Y H:i') }}</dd>
+
+                            <dt class="col-sm-5">Cập nhật:</dt>
+                            <dd class="col-sm-7">{{ $image->updated_at->format('d/m/Y H:i') }}</dd>
+                        </dl>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-header bg-danger text-white">
+                        <h5 class="card-title mb-0">Xóa ảnh</h5>
+                    </div>
+                    <div class="card-body">
+                        <p class="text-muted small mb-3">
+                            <i class="fas fa-exclamation-triangle"></i>
+                            Hành động này không thể hoàn tác. Ảnh sẽ bị xóa vĩnh viễn.
+                        </p>
+                        <form action="{{ route('admin.images.destroy', $image) }}" method="POST"
+                            onsubmit="return confirm('Bạn có chắc chắn muốn xóa ảnh này? Hành động này không thể hoàn tác!')">
+                            @csrf
+                            @method('DELETE')
+                            <button type="submit" class="btn btn-danger w-100">
+                                <i class="fas fa-trash"></i> Xóa ảnh này
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+@endsection

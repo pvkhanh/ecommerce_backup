@@ -1,0 +1,735 @@
+{{-- @extends('layouts.admin')
+
+@section('title', 'Thêm sản phẩm mới')
+
+@section('content')
+    <div class="container-fluid">
+        <div class="mb-4">
+            <h1 class="h3 mb-0">Thêm sản phẩm mới</h1>
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{{ route('admin.products.index') }}">Sản phẩm</a></li>
+                    <li class="breadcrumb-item active">Thêm mới</li>
+                </ol>
+            </nav>
+        </div>
+
+        <form action="{{ route('admin.products.store') }}" method="POST" id="productForm">
+            @csrf
+            <div class="row">
+                <!-- Main Content -->
+                <div class="col-lg-8">
+                    <!-- Basic Info -->
+                    <div class="card mb-4">
+                        <div class="card-header">
+                            <h5 class="card-title mb-0">Thông tin cơ bản</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="mb-3">
+                                <label class="form-label">Tên sản phẩm <span class="text-danger">*</span></label>
+                                <input type="text" name="name"
+                                    class="form-control @error('name') is-invalid @enderror" value="{{ old('name') }}"
+                                    id="productName" required>
+                                @error('name')
+                                    <div class="invalid-feedback">{{ $message }}</div>
+                                @enderror
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="form-label">Slug (URL)</label>
+                                <input type="text" name="slug"
+                                    class="form-control @error('slug') is-invalid @enderror" value="{{ old('slug') }}"
+                                    id="productSlug">
+                                @error('slug')
+                                    <div class="invalid-feedback">{{ $message }}</div>
+                                @enderror
+                                <small class="form-text text-muted">Để trống để tự động tạo từ tên sản phẩm</small>
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="form-label">Mô tả</label>
+                                <textarea name="description" class="form-control @error('description') is-invalid @enderror" rows="5">{{ old('description') }}</textarea>
+                                @error('description')
+                                    <div class="invalid-feedback">{{ $message }}</div>
+                                @enderror
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="form-label">Giá <span class="text-danger">*</span></label>
+                                <div class="input-group">
+                                    <input type="number" name="price"
+                                        class="form-control @error('price') is-invalid @enderror"
+                                        value="{{ old('price', 0) }}" min="0" step="0.01" required>
+                                    <span class="input-group-text">VNĐ</span>
+                                    @error('price')
+                                        <div class="invalid-feedback">{{ $message }}</div>
+                                    @enderror
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Images -->
+                    <div class="card mb-4">
+                        <div class="card-header d-flex justify-content-between align-items-center">
+                            <h5 class="card-title mb-0">Hình ảnh sản phẩm</h5>
+                            <button type="button" class="btn btn-sm btn-primary" data-bs-toggle="modal"
+                                data-bs-target="#imageModal">
+                                <i class="fas fa-images"></i> Chọn ảnh
+                            </button>
+                        </div>
+                        <div class="card-body">
+                            <div id="selectedImagesContainer" class="row g-2">
+                                <div class="col-12 text-center text-muted py-4">
+                                    <i class="fas fa-images fa-3x mb-2"></i>
+                                    <p>Chưa có ảnh nào được chọn</p>
+                                </div>
+                            </div>
+                            <input type="hidden" name="primary_image_id" id="primaryImageId">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Sidebar -->
+                <div class="col-lg-4">
+                    <!-- Status & Categories -->
+                    <div class="card mb-4">
+                        <div class="card-header">
+                            <h5 class="card-title mb-0">Trạng thái & Danh mục</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="mb-3">
+                                <label class="form-label">Trạng thái <span class="text-danger">*</span></label>
+                                <select name="status" class="form-select @error('status') is-invalid @enderror" required>
+                                    @foreach ($statuses as $status)
+                                        <option value="{{ $status->value }}"
+                                            {{ old('status') == $status->value ? 'selected' : '' }}>
+                                            {{ $status->name }}
+                                        </option>
+                                    @endforeach
+                                </select>
+                                @error('status')
+                                    <div class="invalid-feedback">{{ $message }}</div>
+                                @enderror
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="form-label">Danh mục</label>
+                                <div
+                                    style="max-height: 200px; overflow-y: auto; border: 1px solid #dee2e6; border-radius: 0.25rem; padding: 0.5rem;">
+                                    @foreach ($categories as $category)
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" name="category_ids[]"
+                                                value="{{ $category->id }}" id="category{{ $category->id }}"
+                                                {{ in_array($category->id, old('category_ids', [])) ? 'checked' : '' }}>
+                                            <label class="form-check-label" for="category{{ $category->id }}">
+                                                {{ $category->name }}
+                                            </label>
+                                        </div>
+                                        @if ($category->children->count() > 0)
+                                            @foreach ($category->children as $child)
+                                                <div class="form-check ms-3">
+                                                    <input class="form-check-input" type="checkbox" name="category_ids[]"
+                                                        value="{{ $child->id }}" id="category{{ $child->id }}"
+                                                        {{ in_array($child->id, old('category_ids', [])) ? 'checked' : '' }}>
+                                                    <label class="form-check-label" for="category{{ $child->id }}">
+                                                        {{ $child->name }}
+                                                    </label>
+                                                </div>
+                                            @endforeach
+                                        @endif
+                                    @endforeach
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Actions -->
+                    <div class="card">
+                        <div class="card-body">
+                            <button type="submit" class="btn btn-primary w-100 mb-2">
+                                <i class="fas fa-save"></i> Lưu sản phẩm
+                            </button>
+                            <a href="{{ route('admin.products.index') }}" class="btn btn-secondary w-100">
+                                <i class="fas fa-times"></i> Hủy
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </form>
+    </div>
+
+    <!-- Image Selection Modal -->
+    <div class="modal fade" id="imageModal" tabindex="-1">
+        <div class="modal-dialog modal-xl">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Chọn ảnh sản phẩm</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <input type="text" class="form-control" id="imageSearch" placeholder="Tìm kiếm ảnh...">
+                    </div>
+                    <div id="imageGallery" class="row g-2">
+                        <div class="col-12 text-center">
+                            <div class="spinner-border" role="status">
+                                <span class="visually-hidden">Loading...</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button>
+                    <button type="button" class="btn btn-primary" id="confirmImageSelection">Xác nhận</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    @push('scripts')
+        <script>
+            // Auto-generate slug
+            document.getElementById('productName').addEventListener('input', function(e) {
+                const slug = e.target.value
+                    .toLowerCase()
+                    .normalize('NFD')
+                    .replace(/[\u0300-\u036f]/g, '')
+                    .replace(/đ/g, 'd')
+                    .replace(/[^a-z0-9\s-]/g, '')
+                    .replace(/\s+/g, '-')
+                    .replace(/-+/g, '-');
+                document.getElementById('productSlug').value = slug;
+            });
+
+            // Image selection
+            let selectedImages = [];
+            let primaryImageId = null;
+
+            // Load images when modal opens
+            document.getElementById('imageModal').addEventListener('shown.bs.modal', function() {
+                loadImages();
+            });
+
+            function loadImages(search = '') {
+                fetch(`{{ route('admin.images.api.list') }}?type=product&search=${search}`)
+                    .then(res => res.json())
+                    .then(data => {
+                        renderImageGallery(data.data);
+                    });
+            }
+
+            function renderImageGallery(images) {
+                const gallery = document.getElementById('imageGallery');
+                gallery.innerHTML = '';
+
+                images.forEach(image => {
+                    const isSelected = selectedImages.includes(image.id);
+                    const col = document.createElement('div');
+                    col.className = 'col-md-2 col-sm-3 col-4';
+                    col.innerHTML = `
+            <div class="card image-select-card ${isSelected ? 'border-primary' : ''}"
+                 data-image-id="${image.id}"
+                 onclick="toggleImageSelection(${image.id}, '${image.path}')">
+                <img src="/storage/${image.path}" class="card-img-top" style="height: 120px; object-fit: cover;">
+                ${isSelected ? '<div class="position-absolute top-0 end-0 m-1"><i class="fas fa-check-circle text-primary fa-2x"></i></div>' : ''}
+            </div>
+        `;
+                    gallery.appendChild(col);
+                });
+            }
+
+            function toggleImageSelection(imageId, imagePath) {
+                const index = selectedImages.indexOf(imageId);
+                if (index > -1) {
+                    selectedImages.splice(index, 1);
+                    if (primaryImageId === imageId) {
+                        primaryImageId = selectedImages[0] || null;
+                    }
+                } else {
+                    selectedImages.push(imageId);
+                    if (!primaryImageId) {
+                        primaryImageId = imageId;
+                    }
+                }
+                loadImages();
+            }
+
+            document.getElementById('confirmImageSelection').addEventListener('click', function() {
+                updateSelectedImagesDisplay();
+                bootstrap.Modal.getInstance(document.getElementById('imageModal')).hide();
+            });
+
+            function updateSelectedImagesDisplay() {
+                const container = document.getElementById('selectedImagesContainer');
+                container.innerHTML = '';
+
+                if (selectedImages.length === 0) {
+                    container.innerHTML = `
+            <div class="col-12 text-center text-muted py-4">
+                <i class="fas fa-images fa-3x mb-2"></i>
+                <p>Chưa có ảnh nào được chọn</p>
+            </div>
+        `;
+                    return;
+                }
+
+                selectedImages.forEach(imageId => {
+                    fetch(`{{ route('admin.images.api.list') }}?type=product`)
+                        .then(res => res.json())
+                        .then(data => {
+                            const image = data.data.find(img => img.id === imageId);
+                            if (image) {
+                                const col = document.createElement('div');
+                                col.className = 'col-md-3 col-sm-4 col-6';
+                                col.innerHTML = `
+                        <div class="card ${primaryImageId === imageId ? 'border-primary' : ''}">
+                            <img src="/storage/${image.path}" class="card-img-top" style="height: 150px; object-fit: cover;">
+                            <div class="card-body p-2">
+                                <input type="hidden" name="image_ids[]" value="${imageId}">
+                                ${primaryImageId === imageId ? '<span class="badge bg-primary w-100 mb-1">Ảnh chính</span>' : ''}
+                                <div class="btn-group btn-group-sm w-100">
+                                    <button type="button" class="btn btn-outline-primary" onclick="setPrimaryImage(${imageId})">
+                                        <i class="fas fa-star"></i>
+                                    </button>
+                                    <button type="button" class="btn btn-outline-danger" onclick="removeImage(${imageId})">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                                container.appendChild(col);
+                            }
+                        });
+                });
+
+                document.getElementById('primaryImageId').value = primaryImageId || '';
+            }
+
+            function setPrimaryImage(imageId) {
+                primaryImageId = imageId;
+                updateSelectedImagesDisplay();
+            }
+
+            function removeImage(imageId) {
+                selectedImages = selectedImages.filter(id => id !== imageId);
+                if (primaryImageId === imageId) {
+                    primaryImageId = selectedImages[0] || null;
+                }
+                updateSelectedImagesDisplay();
+            }
+
+            // Search images
+            let searchTimeout;
+            document.getElementById('imageSearch').addEventListener('input', function(e) {
+                clearTimeout(searchTimeout);
+                searchTimeout = setTimeout(() => {
+                    loadImages(e.target.value);
+                }, 500);
+            });
+        </script>
+    @endpush
+@endsection --}}
+
+
+
+@extends('layouts.admin')
+
+@section('title', 'Thêm sản phẩm mới')
+
+@section('content')
+    <div class="container-fluid py-4">
+
+        {{-- Breadcrumb & Header --}}
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <div>
+                <h2 class="fw-bold mb-0"><i class="fas fa-plus-circle me-2 text-primary"></i>Thêm sản phẩm mới</h2>
+                <nav aria-label="breadcrumb">
+                    <ol class="breadcrumb small text-muted mb-0">
+                        <li class="breadcrumb-item"><a href="{{ route('admin.dashboard') }}">Dashboard</a></li>
+                        <li class="breadcrumb-item"><a href="{{ route('admin.products.index') }}">Sản phẩm</a></li>
+                        <li class="breadcrumb-item active">Thêm mới</li>
+                    </ol>
+                </nav>
+            </div>
+            <a href="{{ route('admin.products.index') }}" class="btn btn-secondary">
+                <i class="fas fa-arrow-left me-2"></i>Quay lại
+            </a>
+        </div>
+
+        <form action="{{ route('admin.products.store') }}" method="POST" id="productForm">
+            @csrf
+
+            <div class="row">
+                {{-- Left Column --}}
+                <div class="col-lg-8">
+                    {{-- Thông tin cơ bản --}}
+                    <div class="card border-0 shadow-sm mb-4">
+                        <div class="card-header bg-white">
+                            <h5 class="mb-0"><i class="fas fa-info-circle me-2"></i>Thông tin cơ bản</h5>
+                        </div>
+                        <div class="card-body">
+                            {{-- Tên sản phẩm --}}
+                            <div class="mb-3">
+                                <label class="form-label fw-semibold">Tên sản phẩm <span
+                                        class="text-danger">*</span></label>
+                                <input type="text" name="name"
+                                    class="form-control @error('name') is-invalid @enderror" value="{{ old('name') }}"
+                                    placeholder="Nhập tên sản phẩm" id="productName" required>
+                                @error('name')
+                                    <div class="invalid-feedback">{{ $message }}</div>
+                                @enderror
+                            </div>
+
+                            {{-- Slug --}}
+                            <div class="mb-3">
+                                <label class="form-label fw-semibold">Slug (URL thân thiện)</label>
+                                <input type="text" name="slug"
+                                    class="form-control @error('slug') is-invalid @enderror" value="{{ old('slug') }}"
+                                    placeholder="tu-dong-tao-neu-de-trong" id="productSlug">
+                                <small class="text-muted">Để trống để tự động tạo từ tên sản phẩm</small>
+                                @error('slug')
+                                    <div class="invalid-feedback">{{ $message }}</div>
+                                @enderror
+                            </div>
+
+                            {{-- Mô tả --}}
+                            <div class="mb-3">
+                                <label class="form-label fw-semibold">Mô tả sản phẩm</label>
+                                <textarea name="description" rows="5" class="form-control @error('description') is-invalid @enderror"
+                                    placeholder="Nhập mô tả chi tiết về sản phẩm...">{{ old('description') }}</textarea>
+                                @error('description')
+                                    <div class="invalid-feedback">{{ $message }}</div>
+                                @enderror
+                            </div>
+                        </div>
+                    </div>
+
+                    {{-- Hình ảnh --}}
+                    <div class="card border-0 shadow-sm mb-4">
+                        <div class="card-header bg-white d-flex justify-content-between align-items-center">
+                            <h5 class="mb-0"><i class="fas fa-images me-2"></i>Hình ảnh sản phẩm</h5>
+                            <button type="button" class="btn btn-sm btn-primary" data-bs-toggle="modal"
+                                data-bs-target="#imagePickerModal">
+                                <i class="fas fa-plus me-1"></i>Chọn ảnh
+                            </button>
+                        </div>
+                        <div class="card-body">
+                            <div id="selectedImagesContainer" class="row g-3">
+                                <div class="col-12 text-center text-muted py-5">
+                                    <i class="fas fa-image fa-3x mb-3 d-block opacity-25"></i>
+                                    <p>Chưa có ảnh nào được chọn</p>
+                                </div>
+                            </div>
+                            <input type="hidden" name="image_ids[]" id="imageIdsInput">
+                            <input type="hidden" name="primary_image_id" id="primaryImageInput">
+                        </div>
+                    </div>
+                </div>
+
+                {{-- Right Column --}}
+                <div class="col-lg-4">
+                    {{-- Giá & Trạng thái --}}
+                    <div class="card border-0 shadow-sm mb-4">
+                        <div class="card-header bg-white">
+                            <h5 class="mb-0"><i class="fas fa-dollar-sign me-2"></i>Giá & Trạng thái</h5>
+                        </div>
+                        <div class="card-body">
+                            {{-- Giá --}}
+                            <div class="mb-3">
+                                <label class="form-label fw-semibold">Giá sản phẩm <span
+                                        class="text-danger">*</span></label>
+                                <div class="input-group">
+                                    <input type="number" name="price"
+                                        class="form-control @error('price') is-invalid @enderror"
+                                        value="{{ old('price') }}" placeholder="0" min="0" step="1000" required>
+                                    <span class="input-group-text">đ</span>
+                                </div>
+                                @error('price')
+                                    <div class="invalid-feedback d-block">{{ $message }}</div>
+                                @enderror
+                            </div>
+
+                            {{-- Trạng thái --}}
+                            <div class="mb-3">
+                                <label class="form-label fw-semibold">Trạng thái <span class="text-danger">*</span></label>
+                                <select name="status" class="form-select @error('status') is-invalid @enderror" required>
+                                    @foreach ($statuses as $status)
+                                        <option value="{{ $status->value }}"
+                                            {{ old('status', 'draft') == $status->value ? 'selected' : '' }}>
+                                            {{ $status->label() }}
+                                        </option>
+                                    @endforeach
+                                </select>
+                                @error('status')
+                                    <div class="invalid-feedback">{{ $message }}</div>
+                                @enderror
+                            </div>
+                        </div>
+                    </div>
+
+                    {{-- Danh mục --}}
+                    <div class="card border-0 shadow-sm mb-4">
+                        <div class="card-header bg-white">
+                            <h5 class="mb-0"><i class="fas fa-folder me-2"></i>Danh mục</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="category-checkboxes" style="max-height: 300px; overflow-y: auto;">
+                                @foreach ($categories as $category)
+                                    <div class="form-check mb-2">
+                                        <input class="form-check-input" type="checkbox" name="category_ids[]"
+                                            value="{{ $category->id }}" id="cat{{ $category->id }}"
+                                            {{ in_array($category->id, old('category_ids', [])) ? 'checked' : '' }}>
+                                        <label class="form-check-label" for="cat{{ $category->id }}">
+                                            {{ $category->name }}
+                                        </label>
+                                    </div>
+                                @endforeach
+                            </div>
+                        </div>
+                    </div>
+
+                    {{-- Actions --}}
+                    <div class="card border-0 shadow-sm">
+                        <div class="card-body">
+                            <button type="submit" class="btn btn-primary w-100 mb-2">
+                                <i class="fas fa-save me-2"></i>Lưu sản phẩm
+                            </button>
+                            <a href="{{ route('admin.products.index') }}" class="btn btn-secondary w-100">
+                                <i class="fas fa-times me-2"></i>Hủy bỏ
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </form>
+
+    </div>
+
+    {{-- Image Picker Modal --}}
+    <div class="modal fade" id="imagePickerModal" tabindex="-1">
+        <div class="modal-dialog modal-xl">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Chọn hình ảnh</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="row g-3" id="imageGallery">
+                        <div class="col-12 text-center py-5">
+                            <div class="spinner-border text-primary" role="status">
+                                <span class="visually-hidden">Đang tải...</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button>
+                    <button type="button" class="btn btn-primary" id="confirmImageSelection">
+                        <i class="fas fa-check me-2"></i>Xác nhận
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    @push('scripts')
+        <script>
+            // Auto generate slug
+            document.getElementById('productName').addEventListener('input', function(e) {
+                const slug = e.target.value
+                    .toLowerCase()
+                    .normalize('NFD')
+                    .replace(/[\u0300-\u036f]/g, '')
+                    .replace(/đ/g, 'd')
+                    .replace(/[^a-z0-9\s-]/g, '')
+                    .replace(/\s+/g, '-')
+                    .replace(/-+/g, '-')
+                    .trim();
+
+                document.getElementById('productSlug').value = slug;
+            });
+
+            // Image picker logic
+            let selectedImages = [];
+
+            // Load images when modal opens
+            document.getElementById('imagePickerModal').addEventListener('show.bs.modal', function() {
+                loadImages();
+            });
+
+            function loadImages() {
+                fetch('{{ route('admin.images.api.list') }}')
+                    .then(response => response.json())
+                    .then(data => {
+                        renderImageGallery(data.images);
+                    })
+                    .catch(error => {
+                        console.error('Error loading images:', error);
+                    });
+            }
+
+            function renderImageGallery(images) {
+                const gallery = document.getElementById('imageGallery');
+
+                if (images.length === 0) {
+                    gallery.innerHTML = '<div class="col-12 text-center text-muted py-5">Chưa có ảnh nào</div>';
+                    return;
+                }
+
+                gallery.innerHTML = images.map(img => `
+                <div class="col-md-3 col-sm-4 col-6">
+                    <div class="card image-select-card ${selectedImages.includes(img.id) ? 'selected' : ''}"
+                         onclick="toggleImageSelection(${img.id})">
+                        <img src="${img.url}" class="card-img-top" style="height: 200px; object-fit: cover;" alt="${img.name}">
+                        <div class="card-body p-2">
+                            <small class="text-muted d-block text-truncate">${img.name}</small>
+                        </div>
+                        <div class="selection-badge">
+                            <i class="fas fa-check-circle"></i>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+            }
+
+            function toggleImageSelection(imageId) {
+                const index = selectedImages.indexOf(imageId);
+                if (index > -1) {
+                    selectedImages.splice(index, 1);
+                } else {
+                    selectedImages.push(imageId);
+                }
+
+                // Update UI
+                document.querySelectorAll('.image-select-card').forEach(card => {
+                    const cardImageId = parseInt(card.getAttribute('onclick').match(/\d+/)[0]);
+                    if (selectedImages.includes(cardImageId)) {
+                        card.classList.add('selected');
+                    } else {
+                        card.classList.remove('selected');
+                    }
+                });
+            }
+
+            document.getElementById('confirmImageSelection').addEventListener('click', function() {
+                updateSelectedImagesDisplay();
+                bootstrap.Modal.getInstance(document.getElementById('imagePickerModal')).hide();
+            });
+
+            function updateSelectedImagesDisplay() {
+                const container = document.getElementById('selectedImagesContainer');
+
+                if (selectedImages.length === 0) {
+                    container.innerHTML = `
+                    <div class="col-12 text-center text-muted py-5">
+                        <i class="fas fa-image fa-3x mb-3 d-block opacity-25"></i>
+                        <p>Chưa có ảnh nào được chọn</p>
+                    </div>
+                `;
+                    return;
+                }
+
+                // Fetch image details
+                fetch('{{ route('admin.images.api.list') }}')
+                    .then(response => response.json())
+                    .then(data => {
+                        const selectedImagesData = data.images.filter(img => selectedImages.includes(img.id));
+
+                        container.innerHTML = selectedImagesData.map((img, index) => `
+                        <div class="col-md-3 col-sm-4 col-6">
+                            <div class="card position-relative">
+                                <img src="${img.url}" class="card-img-top" style="height: 150px; object-fit: cover;" alt="${img.name}">
+                                <div class="card-body p-2">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="radio" name="primary_image"
+                                            value="${img.id}" id="primary${img.id}" ${index === 0 ? 'checked' : ''}>
+                                        <label class="form-check-label small" for="primary${img.id}">
+                                            Ảnh chính
+                                        </label>
+                                    </div>
+                                </div>
+                                <button type="button" class="btn btn-danger btn-sm position-absolute top-0 end-0 m-2"
+                                    onclick="removeImage(${img.id})">
+                                    <i class="fas fa-times"></i>
+                                </button>
+                            </div>
+                        </div>
+                    `).join('');
+
+                        // Update hidden inputs
+                        updateHiddenInputs();
+                    });
+            }
+
+            function removeImage(imageId) {
+                selectedImages = selectedImages.filter(id => id !== imageId);
+                updateSelectedImagesDisplay();
+            }
+
+            function updateHiddenInputs() {
+                // Update image_ids
+                const container = document.getElementById('selectedImagesContainer');
+                container.querySelectorAll('input[name="image_ids[]"]').forEach(input => input.remove());
+
+                selectedImages.forEach(id => {
+                    const input = document.createElement('input');
+                    input.type = 'hidden';
+                    input.name = 'image_ids[]';
+                    input.value = id;
+                    container.appendChild(input);
+                });
+
+                // Update primary_image_id
+                const primaryRadio = document.querySelector('input[name="primary_image"]:checked');
+                if (primaryRadio) {
+                    document.getElementById('primaryImageInput').value = primaryRadio.value;
+                }
+            }
+
+            // Update primary image when radio changes
+            document.addEventListener('change', function(e) {
+                if (e.target.name === 'primary_image') {
+                    document.getElementById('primaryImageInput').value = e.target.value;
+                }
+            });
+        </script>
+
+        <style>
+            .image-select-card {
+                cursor: pointer;
+                transition: all 0.3s;
+                position: relative;
+            }
+
+            .image-select-card:hover {
+                transform: translateY(-5px);
+                box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+            }
+
+            .image-select-card.selected {
+                border: 3px solid #0d6efd;
+            }
+
+            .selection-badge {
+                position: absolute;
+                top: 10px;
+                right: 10px;
+                background: #0d6efd;
+                color: white;
+                width: 30px;
+                height: 30px;
+                border-radius: 50%;
+                display: none;
+                align-items: center;
+                justify-content: center;
+            }
+
+            .image-select-card.selected .selection-badge {
+                display: flex;
+            }
+        </style>
+    @endpush
+@endsection

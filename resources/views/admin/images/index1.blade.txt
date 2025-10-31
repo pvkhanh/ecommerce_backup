@@ -1,0 +1,258 @@
+{{-- @php use Illuminate\Support\Str; @endphp
+
+@extends('admin.layouts.app')
+
+@section('title', 'Quản lý ảnh')
+
+@section('content')
+    <div class="container-fluid">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h1 class="h3 mb-0">Quản lý ảnh</h1>
+            <a href="{{ route('admin.images.create') }}" class="btn btn-primary">
+                <i class="fas fa-plus"></i> Tải lên ảnh mới
+            </a>
+        </div>
+
+        <!-- Filter Form -->
+        <div class="card mb-4">
+            <div class="card-body">
+                <form method="GET" action="{{ route('admin.images.index') }}" class="row g-3">
+                    <div class="col-md-4">
+                        <label class="form-label">Loại ảnh</label>
+                        <select name="type" class="form-select">
+                            <option value="">Tất cả</option>
+                            <option value="product" {{ request('type') == 'product' ? 'selected' : '' }}>Sản phẩm</option>
+                            <option value="avatar" {{ request('type') == 'avatar' ? 'selected' : '' }}>Avatar</option>
+                            <option value="banner" {{ request('type') == 'banner' ? 'selected' : '' }}>Banner</option>
+                            <option value="blog" {{ request('type') == 'blog' ? 'selected' : '' }}>Blog</option>
+                        </select>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">Tìm kiếm</label>
+                        <input type="text" name="search" class="form-control" placeholder="Tên file, mô tả..."
+                            value="{{ request('search') }}">
+                    </div>
+                    <div class="col-md-2 d-flex align-items-end">
+                        <button type="submit" class="btn btn-primary w-100">
+                            <i class="fas fa-search"></i> Lọc
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Success Message -->
+        @if (session('success'))
+            <div class="alert alert-success alert-dismissible fade show">
+                {{ session('success') }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+        @endif
+
+        <!-- Images Grid -->
+        <div class="card">
+            <div class="card-body">
+                <div class="row g-3">
+                    @forelse($images as $image)
+                        <div class="col-md-2 col-sm-3 col-6">
+                            <div class="card h-100">
+                                <div class="position-relative">
+                                    @php
+                                        // Nếu là URL đầy đủ (ảnh online), dùng trực tiếp
+                                        $imageUrl = Str::startsWith($image->path, ['http://', 'https://'])
+                                            ? $image->path
+                                            : // Nếu là ảnh upload nội bộ, nối với storage
+                                            asset('storage/' . $image->path);
+                                    @endphp
+
+                                    <img src="{{ $imageUrl }}" class="card-img-top"
+                                        style="height: 150px; object-fit: cover;" alt="{{ $image->alt_text }}">
+
+                                    <span
+                                        class="position-absolute top-0 end-0 badge bg-{{ $image->is_active ? 'success' : 'secondary' }} m-1">
+                                        {{ $image->is_active ? 'Active' : 'Inactive' }}
+                                    </span>
+                                </div>
+                                <div class="card-body p-2">
+                                    <small class="d-block text-truncate mb-1">
+                                        <strong>Type:</strong> {{ $image->type }}
+                                    </small>
+                                    <small class="d-block text-truncate mb-2" title="{{ $image->alt_text }}">
+                                        {{ $image->alt_text ?: 'Không có mô tả' }}
+                                    </small>
+                                    <div class="d-flex gap-1">
+                                        <a href="{{ route('admin.images.edit', $image) }}"
+                                            class="btn btn-sm btn-outline-primary flex-fill">
+                                            <i class="fas fa-edit"></i>
+                                        </a>
+                                        <form action="{{ route('admin.images.destroy', $image) }}" method="POST"
+                                            class="flex-fill" onsubmit="return confirm('Bạn có chắc muốn xóa ảnh này?')">
+                                            @csrf
+                                            @method('DELETE')
+                                            <button type="submit" class="btn btn-sm btn-outline-danger w-100">
+                                                <i class="fas fa-trash"></i>
+                                            </button>
+                                        </form>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    @empty
+                        <div class="col-12">
+                            <div class="alert alert-info text-center">
+                                <i class="fas fa-info-circle"></i> Không có ảnh nào.
+                            </div>
+                        </div>
+                    @endforelse
+                </div>
+
+                <!-- Pagination -->
+                <div class="mt-4">
+                    {{ $images->links() }}
+                </div>
+            </div>
+        </div>
+    </div>
+@endsection --}}
+
+
+
+@php
+    use Illuminate\Support\Str;
+@endphp
+
+@extends('admin.layouts.app')
+
+@section('title', 'Quản lý ảnh')
+
+@section('content')
+    <div class="container-fluid">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h1 class="h3 mb-0">Quản lý ảnh</h1>
+            <a href="{{ route('admin.images.create') }}" class="btn btn-primary">
+                <i class="fas fa-plus"></i> Tải lên ảnh mới
+            </a>
+        </div>
+
+        <!-- Bộ lọc -->
+        <div class="card mb-4">
+            <div class="card-body">
+                <form method="GET" action="{{ route('admin.images.index') }}" class="row g-3">
+                    <div class="col-md-4">
+                        <label class="form-label">Loại ảnh</label>
+                        <select name="type" class="form-select">
+                            <option value="">Tất cả</option>
+                            <option value="product" {{ request('type') == 'product' ? 'selected' : '' }}>Sản phẩm</option>
+                            <option value="avatar" {{ request('type') == 'avatar' ? 'selected' : '' }}>Avatar</option>
+                            <option value="banner" {{ request('type') == 'banner' ? 'selected' : '' }}>Banner</option>
+                            <option value="blog" {{ request('type') == 'blog' ? 'selected' : '' }}>Blog</option>
+                        </select>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">Tìm kiếm</label>
+                        <input type="text" name="search" class="form-control" placeholder="Tên file, mô tả..."
+                            value="{{ request('search') }}">
+                    </div>
+                    <div class="col-md-2 d-flex align-items-end">
+                        <button type="submit" class="btn btn-primary w-100">
+                            <i class="fas fa-search"></i> Lọc
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Thông báo -->
+        @if (session('success'))
+            <div class="alert alert-success alert-dismissible fade show">
+                {{ session('success') }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+        @endif
+
+        <!-- Danh sách ảnh -->
+        <div class="card">
+            <div class="card-body">
+                <div class="row g-3">
+                    @forelse($images as $image)
+                        @php
+                            // Lấy URL ảnh: nếu path bắt đầu bằng http hoặc https thì giữ nguyên, ngược lại nối 'storage/'
+                            $imageUrl = Str::startsWith($image->path, ['http://', 'https://'])
+                                ? $image->path
+                                : asset('storage/' . ltrim($image->path, '/'));
+
+                            // Lấy đuôi ảnh
+                            $ext = strtolower(pathinfo($image->path, PATHINFO_EXTENSION));
+
+                            // Màu icon theo đuôi ảnh
+                            $extColors = [
+                                'jpg' => 'text-danger',
+                                'jpeg' => 'text-danger',
+                                'png' => 'text-primary',
+                                'webp' => 'text-success',
+                                'gif' => 'text-warning',
+                                'svg' => 'text-info',
+                                'bmp' => 'text-secondary',
+                            ];
+
+                            $iconColor = $extColors[$ext] ?? 'text-muted';
+                        @endphp
+
+                        <div class="col-md-2 col-sm-3 col-6">
+                            <div class="card h-100 shadow-sm">
+                                <div class="position-relative">
+                                    <img src="{{ $imageUrl }}" class="card-img-top"
+                                        style="height: 150px; object-fit: cover;" alt="{{ $image->alt_text }}">
+                                    <span
+                                        class="position-absolute top-0 end-0 badge bg-{{ $image->is_active ? 'success' : 'secondary' }} m-1">
+                                        {{ $image->is_active ? 'Active' : 'Inactive' }}
+                                    </span>
+                                </div>
+
+                                <div class="card-body p-2">
+                                    <small class="d-block text-truncate mb-1">
+                                        <strong>Type:</strong> {{ ucfirst($image->type) }}
+                                    </small>
+                                    <small class="d-block text-truncate mb-1">
+                                        <strong>Đuôi:</strong>
+                                        <i class="fas fa-file-image {{ $iconColor }}"></i>
+                                        {{ $ext ?: 'Không rõ' }}
+                                    </small>
+                                    <small class="d-block text-truncate mb-2" title="{{ $image->alt_text }}">
+                                        {{ $image->alt_text ?: 'Không có mô tả' }}
+                                    </small>
+
+                                    <div class="d-flex gap-1">
+                                        <a href="{{ route('admin.images.edit', $image) }}"
+                                            class="btn btn-sm btn-outline-primary flex-fill">
+                                            <i class="fas fa-edit"></i>
+                                        </a>
+                                        <form action="{{ route('admin.images.destroy', $image) }}" method="POST"
+                                            class="flex-fill" onsubmit="return confirm('Bạn có chắc muốn xóa ảnh này?')">
+                                            @csrf
+                                            @method('DELETE')
+                                            <button type="submit" class="btn btn-sm btn-outline-danger w-100">
+                                                <i class="fas fa-trash"></i>
+                                            </button>
+                                        </form>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    @empty
+                        <div class="col-12">
+                            <div class="alert alert-info text-center">
+                                <i class="fas fa-info-circle"></i> Không có ảnh nào.
+                            </div>
+                        </div>
+                    @endforelse
+                </div>
+
+                <!-- Phân trang -->
+                <div class="mt-4">
+                    {{ $images->links() }}
+                </div>
+            </div>
+        </div>
+    </div>
+@endsection

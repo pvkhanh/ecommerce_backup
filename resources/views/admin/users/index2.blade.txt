@@ -1,0 +1,273 @@
+@extends('layouts.admin')
+
+@section('title', 'Quản lý người dùng')
+
+@section('content')
+    <div class="container-fluid px-4">
+
+        <!-- Header & Breadcrumb -->
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <div>
+                <h2 class="fw-bold text-dark mb-1">
+                    <i class="fa-solid fa-users-gear text-primary me-2"></i>Quản lý người dùng
+                </h2>
+                <nav aria-label="breadcrumb">
+                    <ol class="breadcrumb mb-0">
+                        <li class="breadcrumb-item"><a href="{{ route('admin.dashboard') }}">Dashboard</a></li>
+                        <li class="breadcrumb-item active">Người dùng</li>
+                    </ol>
+                </nav>
+            </div>
+            <a href="{{ route('admin.users.create') }}" class="btn btn-primary btn-lg shadow-sm">
+                <i class="fa-solid fa-user-plus me-2"></i>Thêm người dùng
+            </a>
+        </div>
+
+        <!-- Stats Cards -->
+        <div class="row g-3 mb-4">
+            @php
+                $stats = [
+                    [
+                        'title' => 'Tổng người dùng',
+                        'value' => \App\Models\User::count(),
+                        'icon' => 'fa-users',
+                        'bg' => 'primary',
+                    ],
+                    [
+                        'title' => 'Đang hoạt động',
+                        'value' => \App\Models\User::where('is_active', 1)->count(),
+                        'icon' => 'fa-user-check',
+                        'bg' => 'success',
+                    ],
+                    [
+                        'title' => 'Email xác thực',
+                        'value' => \App\Models\User::whereNotNull('email_verified_at')->count(),
+                        'icon' => 'fa-envelope-circle-check',
+                        'bg' => 'warning',
+                    ],
+                    [
+                        'title' => 'Admin',
+                        'value' => \App\Models\User::where('role', 'admin')->count(),
+                        'icon' => 'fa-user-shield',
+                        'bg' => 'danger',
+                    ],
+                ];
+            @endphp
+
+            @foreach ($stats as $stat)
+                <div class="col-xl-3 col-md-6">
+                    <div class="card shadow-sm h-100 text-white bg-gradient-{{ $stat['bg'] }}">
+                        <div class="card-body d-flex justify-content-between align-items-center">
+                            <div>
+                                <h6 class="text-white-50 mb-1">{{ $stat['title'] }}</h6>
+                                <h3 class="fw-bold mb-0">{{ $stat['value'] }}</h3>
+                            </div>
+                            <div class="fs-1 opacity-50"><i class="fa-solid {{ $stat['icon'] }}"></i></div>
+                        </div>
+                    </div>
+                </div>
+            @endforeach
+        </div>
+
+        <!-- Filter -->
+        <div class="card shadow-sm mb-4">
+            <div class="card-header bg-white py-3">
+                <h5 class="mb-0 fw-semibold"><i class="fa-solid fa-filter text-primary me-2"></i>Bộ lọc</h5>
+            </div>
+            <div class="card-body">
+                <form method="GET" action="{{ route('admin.users.index') }}" class="row g-3 align-items-end">
+                    <div class="col-md-3">
+                        <label class="form-label fw-semibold">Tìm kiếm</label>
+                        <input type="text" name="search" class="form-control form-control-lg"
+                            placeholder="Tên hoặc email..." value="{{ request('search') }}">
+                    </div>
+                    <div class="col-md-2">
+                        <label class="form-label fw-semibold">Vai trò</label>
+                        <select name="role" class="form-select form-select-lg">
+                            <option value="">Tất cả</option>
+                            <option value="admin" {{ request('role') == 'admin' ? 'selected' : '' }}>Admin</option>
+                            <option value="buyer" {{ request('role') == 'buyer' ? 'selected' : '' }}>Người mua</option>
+                        </select>
+                    </div>
+                    <div class="col-md-2">
+                        <label class="form-label fw-semibold">Trạng thái</label>
+                        <select name="status" class="form-select form-select-lg">
+                            <option value="">Tất cả</option>
+                            <option value="1" {{ request('status') == '1' ? 'selected' : '' }}>Hoạt động</option>
+                            <option value="0" {{ request('status') == '0' ? 'selected' : '' }}>Vô hiệu hóa</option>
+                        </select>
+                    </div>
+                    <div class="col-md-2">
+                        <label class="form-label fw-semibold">Email</label>
+                        <select name="verified" class="form-select form-select-lg">
+                            <option value="">Tất cả</option>
+                            <option value="1" {{ request('verified') == '1' ? 'selected' : '' }}>Đã xác thực</option>
+                            <option value="0" {{ request('verified') == '0' ? 'selected' : '' }}>Chưa xác thực</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3 d-flex gap-2">
+                        <button type="submit" class="btn btn-primary btn-lg flex-fill"><i
+                                class="fa-solid fa-filter me-2"></i>Lọc</button>
+                        <a href="{{ route('admin.users.index') }}" class="btn btn-outline-secondary btn-lg"><i
+                                class="fa-solid fa-rotate-right"></i></a>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Users Table -->
+        <div class="card shadow-sm">
+            <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+                <h5 class="mb-0 fw-semibold">
+                    <i class="fa-solid fa-list text-primary me-2"></i>Danh sách người dùng
+                    <span class="badge bg-primary fs-6">{{ $users->total() }} người dùng</span>
+                </h5>
+                <a href="{{ route('admin.users.trashed') }}" class="btn btn-secondary btn-lg"><i
+                        class="fa-solid fa-trash-arrow-up me-2"></i>Thùng rác</a>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead class="bg-light">
+                            <tr>
+                                <th class="text-center">#</th>
+                                <th>Người dùng</th>
+                                <th>Liên hệ</th>
+                                <th class="text-center">Vai trò</th>
+                                <th class="text-center">Trạng thái</th>
+                                <th class="text-center">Email</th>
+                                <th>Ngày tạo</th>
+                                <th class="text-center">Hành động</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @forelse($users as $user)
+                                <tr class="border-bottom align-middle">
+                                    <td class="text-center">{{ $loop->iteration }}</td>
+                                    <td class="d-flex align-items-center gap-3">
+                                        @php
+                                            $avatar =
+                                                optional($user->images()->wherePivot('is_main', true)->first())->path ??
+                                                null;
+                                        @endphp
+                                        @if ($avatar)
+                                            <img src="{{ asset('storage/' . $avatar) }}" class="rounded-circle shadow-sm"
+                                                style="width:50px;height:50px;object-fit:cover">
+                                        @else
+                                            <div class="rounded-circle bg-gradient-primary text-white d-flex justify-content-center align-items-center shadow-sm fw-bold"
+                                                style="width:50px;height:50px;font-size:20px;">
+                                                {{ strtoupper(substr($user->username ?? 'U', 0, 1)) }}
+                                            </div>
+                                        @endif
+                                        <div>
+                                            <div class="fw-bold">{{ $user->username }}</div>
+                                            <div class="text-muted small"><i
+                                                    class="fa-solid fa-envelope me-1"></i>{{ $user->email }}</div>
+                                        </div>
+                                    </td>
+                                    <td class="small">
+                                        @if ($user->phone)
+                                            <div><i class="fa-solid fa-phone me-1 text-primary"></i>{{ $user->phone }}
+                                            </div>
+                                        @endif
+                                        @if ($user->gender)
+                                            <div><i
+                                                    class="fa-solid fa-venus-mars me-1 text-info"></i>{{ ucfirst($user->gender) }}
+                                            </div>
+                                        @endif
+                                        @if (!$user->phone && !$user->gender)
+                                            <span class="text-muted">—</span>
+                                        @endif
+                                    </td>
+                                    <td class="text-center">
+                                        <span
+                                            class="badge bg-{{ $user->role == 'admin' ? 'danger' : 'info' }}">{{ ucfirst($user->role) }}</span>
+                                    </td>
+                                    <td class="text-center">
+                                        <input type="checkbox" class="form-check-input toggle-status"
+                                            data-id="{{ $user->id }}" {{ $user->is_active ? 'checked' : '' }}>
+                                    </td>
+                                    <td class="text-center">
+                                        @if ($user->email_verified_at)
+                                            <span class="badge bg-success" data-bs-toggle="tooltip"
+                                                title="Xác thực: {{ $user->email_verified_at->format('d/m/Y H:i') }}">Đã
+                                                xác thực</span>
+                                        @else
+                                            <span class="badge bg-warning text-dark">Chưa xác thực</span>
+                                        @endif
+                                    </td>
+                                    <td>{{ $user->created_at->format('d/m/Y H:i') }}</td>
+                                    <td class="text-center">
+                                        <div class="btn-group">
+                                            <a href="{{ route('admin.users.show', $user->id) }}"
+                                                class="btn btn-outline-info btn-sm" data-bs-toggle="tooltip"
+                                                title="Xem"><i class="fa-solid fa-eye"></i></a>
+                                            <a href="{{ route('admin.users.edit', $user->id) }}"
+                                                class="btn btn-outline-warning btn-sm" data-bs-toggle="tooltip"
+                                                title="Sửa"><i class="fa-solid fa-pen"></i></a>
+                                            <button type="button" class="btn btn-outline-danger btn-sm btn-delete"
+                                                data-action="{{ route('admin.users.destroy', $user->id) }}"
+                                                data-username="{{ $user->username }}" data-bs-toggle="tooltip"
+                                                title="Xóa"><i class="fa-solid fa-trash"></i></button>
+                                        </div>
+                                    </td>
+                                </tr>
+                            @empty
+                                <tr>
+                                    <td colspan="8" class="text-center py-5 text-muted">
+                                        <i class="fa-solid fa-inbox fs-1 mb-3 opacity-50"></i>
+                                        <div>Không có người dùng nào</div>
+                                    </td>
+                                </tr>
+                            @endforelse
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            @if ($users->hasPages())
+                <div class="card-footer bg-white py-3 d-flex justify-content-between align-items-center">
+                    <div class="text-muted small">Hiển thị {{ $users->firstItem() }} - {{ $users->lastItem() }} trong
+                        {{ $users->total() }} người dùng</div>
+                    <div>{{ $users->links('components.pagination') }}</div>
+                </div>
+            @endif
+        </div>
+    </div>
+
+    <style>
+        .table tbody tr {
+            transition: all 0.2s ease;
+        }
+
+        .table tbody tr:hover {
+            background-color: #f8f9fa;
+            transform: scale(1.01);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .btn-group .btn {
+            transition: all 0.2s ease;
+        }
+
+        .btn-group .btn:hover {
+            transform: translateY(-2px);
+        }
+
+        .bg-gradient-primary {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+        }
+
+        .bg-gradient-success {
+            background: linear-gradient(135deg, #11998e, #38ef7d);
+        }
+
+        .bg-gradient-warning {
+            background: linear-gradient(135deg, #f093fb, #f5576c);
+        }
+
+        .bg-gradient-danger {
+            background: linear-gradient(135deg, #fa709a, #fee140);
+        }
+    </style>
+@endsection

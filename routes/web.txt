@@ -1,0 +1,92 @@
+<?php
+
+use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\Admin\ProductController;
+use App\Http\Controllers\Admin\CategoryController;
+use App\Http\Controllers\Admin\UserController;
+use App\Http\Controllers\Admin\OrderController;
+use App\Http\Controllers\Admin\DashboardController;
+
+/*
+|--------------------------------------------------------------------------
+| Web Routes
+|--------------------------------------------------------------------------
+|
+| Đây là file định nghĩa tất cả các route cho ứng dụng web.
+| Tất cả route trong nhóm 'admin' đều bắt đầu bằng /admin và có tên là admin.*
+|
+*/
+
+// Trang chính
+Route::get('/', [DashboardController::class, 'index'])->name('dashboard');
+
+
+// // ================== ADMIN DASHBOARD ==================
+// Route::prefix('admin')->name('admin.')->group(function () {
+
+//     // Trang tổng quan admin
+//     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
+
+//     // Quản lý sản phẩm
+//     Route::resource('products', ProductController::class);
+//     Route::post('products/{id}/toggle-status', [\App\Http\Controllers\Admin\ProductController::class, 'toggleStatus'])
+//         ->name('products.toggle-status');
+
+//     // Quản lý danh mục
+//     Route::resource('categories', CategoryController::class);
+
+//     // Quản lý users
+//     Route::prefix('users')->name('users.')->group(function () {
+
+//         // Trash
+//         Route::get('trashed', [UserController::class, 'trashed'])->name('trashed');
+
+//         // Restore
+//         Route::post('restore/{id}', [UserController::class, 'restore'])->name('restore');
+//         Route::post('restore-all', [UserController::class, 'restoreAll'])->name('restoreAll');
+
+//         // Force delete
+//         Route::delete('force-delete/{id}', [UserController::class, 'forceDelete'])->name('forceDelete');
+//         Route::delete('force-delete-selected', [UserController::class, 'forceDeleteSelected'])->name('forceDeleteSelected');
+
+//         // Toggle status
+//         Route::post('{id}/toggle-status', [UserController::class, 'toggleStatus'])->name('toggle-status');
+//     });
+
+//     // CRUD bình thường (resource) - để tránh xung đột, đặt sau các route custom
+//     Route::resource('users', UserController::class);
+
+//     // Quản lý đơn hàng
+//     Route::resource('orders', OrderController::class);
+Route::prefix('admin')->name('admin.')->group(function () {
+
+    // Dashboard
+    Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
+
+    // Products
+    Route::resource('products', ProductController::class);
+    Route::post('products/{product}/toggle-status', [ProductController::class, 'toggleStatus'])
+        ->name('products.toggle-status');
+
+    // Categories
+    Route::resource('categories', CategoryController::class);
+
+    // Users (custom + resource)
+    Route::prefix('users')->name('users.')->group(function () {
+
+        Route::get('trashed', [UserController::class, 'trashed'])->name('trashed');
+
+        Route::post('restore/{id}', [UserController::class, 'restore'])->name('restore');
+        Route::post('restore-all', [UserController::class, 'restoreAll'])->name('restoreAll');
+
+        Route::delete('force-delete/{id}', [UserController::class, 'forceDelete'])->name('forceDelete');
+        Route::delete('force-delete-selected', [UserController::class, 'forceDeleteSelected'])->name('forceDeleteSelected');
+
+        Route::post('{id}/toggle-status', [UserController::class, 'toggleStatus'])->name('toggle-status');
+    });
+
+    Route::resource('users', UserController::class);
+
+    // Orders
+    Route::resource('orders', OrderController::class);
+});

@@ -1,0 +1,111 @@
+<?php
+
+namespace App\Repositories\Eloquent;
+
+use App\Repositories\BaseRepository;
+use App\Repositories\Contracts\UserRepositoryInterface;
+use App\Models\User;
+use App\Models\Image;
+use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Support\Facades\DB;
+use App\Models\Imageable;
+
+class UserRepository extends BaseRepository implements UserRepositoryInterface
+{
+    /**
+     * Trả về model class để BaseRepository biết đang thao tác với model nào
+     */
+    protected function model(): string
+    {
+        return User::class;
+    }
+
+    /**
+     * Đặt ảnh đại diện (avatar) cho user — tự động bỏ avatar cũ và gắn avatar mới
+     */
+    public function setAvatar(User $user, Image $image): Image
+    {
+        return DB::transaction(function () use ($user, $image) {
+
+            // 1️⃣ Gỡ cờ avatar cũ trong bảng imageables
+            Imageable::where('imageable_type', get_class($user))
+                ->where('imageable_id', $user->id)
+                ->where('is_main', true)
+                ->update(['is_main' => false]);
+
+            // 2️⃣ Nếu ảnh chưa tồn tại, tạo mới
+            if (!$image->exists) {
+                $image = Image::create([
+                    'path' => $image->path ?? 'default-avatar.png',
+                    'type' => 'avatar',
+                    'alt_text' => $image->alt_text ?? 'User avatar',
+                    'is_active' => true,
+                ]);
+            }
+
+            // 3️⃣ Gán ảnh cho user qua bảng imageables
+            Imageable::updateOrCreate(
+                [
+                    'image_id' => $image->id,
+                    'imageable_id' => $user->id,
+                    'imageable_type' => get_class($user),
+                ],
+                [
+                    'is_main' => true,
+                    'position' => 1,
+                ]
+            );
+
+            return $image->fresh();
+        });
+    }
+
+
+    /**
+     * Lấy danh sách user đang hoạt động (active)
+     */
+    public function getActive(): Collection
+    {
+        return $this->model->active()->get();
+    }
+
+    /**
+     * Lấy danh sách user theo vai trò
+     */
+    public function getByRole(string $role): Collection
+    {
+        return $this->model->role($role)->get();
+    }
+
+    /**
+     * Lấy danh sách user theo giới tính
+     */
+    public function getByGender(string $gender): Collection
+    {
+        return $this->model->gender($gender)->get();
+    }
+
+    /**
+     * Tìm kiếm user theo từ khoá
+     */
+    public function search(string $keyword): Collection
+    {
+        return $this->model->search($keyword)->get();
+    }
+
+    /**
+     * Lấy danh sách user đã xác thực
+     */
+    public function getVerified(): Collection
+    {
+        return $this->model->verified()->get();
+    }
+
+    /**
+     * Lấy danh sách user được tạo trong khoảng thời gian
+     */
+    public function createdBetween(string $from, string $to): Collection
+    {
+        return $this->model->createdBetween($from, $to)->get();
+    }
+}

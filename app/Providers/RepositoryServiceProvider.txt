@@ -1,0 +1,47 @@
+<?php
+namespace App\Providers;
+
+use Illuminate\Support\ServiceProvider;
+use App\Repositories\Contracts\UserRepositoryInterface;
+use App\Repositories\Eloquent\UserRepository;
+class RepositoryServiceProvider extends ServiceProvider
+{
+    public function register(): void
+    {
+        // // bind legacy repo class names to Eloquent implementations to minimise controller changes
+        // $this->app->bind(\App\Repositories\UserRepository::class, \App\Repositories\Eloquent\UserRepository::class);
+        // $this->app->bind(\App\Repositories\ProductRepository::class, \App\Repositories\Eloquent\ProductRepository::class);
+        // $this->app->bind(\App\Repositories\OrderRepository::class, \App\Repositories\Eloquent\OrderRepository::class);
+
+        // $this->app->bind(\App\Repositories\CategoryRepository::class, \App\Repositories\Eloquent\CategoryRepository::class);
+        // $this->app->bind(\App\Repositories\CartItemRepository::class, \App\Repositories\Eloquent\CartItemRepository::class);
+        // $this->app->bind(\App\Repositories\WishlistRepository::class, \App\Repositories\Eloquent\WishlistRepository::class);
+        // $this->app->bind(\App\Repositories\ProductReviewRepository::class, \App\Repositories\Eloquent\ProductReviewRepository::class);
+        // $this->app->bind(\App\Repositories\NotificationRepository::class, \App\Repositories\Eloquent\NotificationRepository::class);
+        // $this->app->bind(\App\Repositories\PaymentRepository::class, \App\Repositories\Eloquent\PaymentRepository::class);
+        // $this->app->bind(\App\Repositories\OrderItemRepository::class, \App\Repositories\Eloquent\OrderItemRepository::class);
+
+
+          $repositories = [
+            \App\Repositories\Contracts\UserRepositoryInterface::class => \App\Repositories\Eloquent\UserRepository::class,
+            \App\Repositories\Contracts\ProductRepositoryInterface::class => \App\Repositories\Eloquent\ProductRepository::class,
+            \App\Repositories\Contracts\CategoryRepositoryInterface::class => \App\Repositories\Eloquent\CategoryRepository::class,
+            \App\Repositories\Contracts\OrderRepositoryInterface::class => \App\Repositories\Eloquent\OrderRepository::class,
+            \App\Repositories\Contracts\BlogRepositoryInterface::class => \App\Repositories\Eloquent\BlogRepository::class,
+            \App\Repositories\Contracts\CartItemRepositoryInterface::class => \App\Repositories\Eloquent\CartItemRepository::class,
+            \App\Repositories\Contracts\WishlistRepositoryInterface::class => \App\Repositories\Eloquent\WishlistRepository::class,
+            \App\Repositories\Contracts\PaymentRepositoryInterface::class => \App\Repositories\Eloquent\PaymentRepository::class,
+            \App\Repositories\Contracts\ProductReviewRepositoryInterface::class => \App\Repositories\Eloquent\ProductReviewRepository::class,
+            \App\Repositories\Contracts\NotificationRepositoryInterface::class => \App\Repositories\Eloquent\NotificationRepository::class,
+        ];
+
+        foreach ($repositories as $interface => $implementation) {
+            $this->app->bind($interface, $implementation);
+        }
+    }
+
+    public function boot(): void
+    {
+        //
+    }
+}

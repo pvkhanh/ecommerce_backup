@@ -1,0 +1,291 @@
+<?php
+
+// namespace App\Http\Controllers\Admin;
+
+// use App\Http\Controllers\Controller;
+// use Illuminate\Http\Request;
+// use App\Repositories\Contracts\ProductRepositoryInterface;
+
+// class ProductController extends Controller
+// {
+//     public function __construct(protected ProductRepositoryInterface $productRepository)
+//     {
+//     }
+
+//     public function index(Request $request)
+//     {
+//         $keyword = $request->query('search', null);
+//         // product repo expected to return paginator when requested
+//         if (method_exists($this->productRepository, 'searchByKeyword')) {
+//             $products = $this->productRepository->searchByKeyword($keyword, 10);
+//         } else {
+//             $query = $this->productRepository->newQuery();
+//             if ($keyword) {
+//                 $query->where('name', 'like', "%{$keyword}%");
+//             }
+//             $products = $this->productRepository->paginateQuery($query, 10);
+//         }
+
+//         return view('admin.products.index', compact('products', 'keyword'));
+//     }
+
+//     public function create()
+//     {
+//         return view('admin.products.create');
+//     }
+
+//     public function store(Request $request)
+//     {
+//         $data = $request->validate([
+//             'name' => 'required|string|max:255',
+//             'slug' => 'nullable|string|unique:products,slug',
+//             'price' => 'required|numeric|min:0',
+//             'status' => 'nullable|string',
+//         ]);
+
+//         $this->productRepository->create($data);
+
+//         return redirect()->route('admin.products.index')->with('success', 'Thêm sản phẩm thành công!');
+//     }
+
+//     public function edit($id)
+//     {
+//         $product = $this->productRepository->findOrFail((int)$id);
+
+//         return view('admin.products.edit', compact('product'));
+//     }
+
+//     public function update(Request $request, $id)
+//     {
+//         $data = $request->validate([
+//             'name' => 'required|string|max:255',
+//             'slug' => 'nullable|string|unique:products,slug,' . $id,
+//             'price' => 'required|numeric|min:0',
+//             'status' => 'nullable|string',
+//         ]);
+
+//         $this->productRepository->update((int)$id, $data);
+
+//         return redirect()->route('admin.products.index')->with('success', 'Cập nhật sản phẩm thành công!');
+//     }
+
+//     public function destroy($id)
+//     {
+//         $this->productRepository->delete((int)$id);
+
+//         return redirect()->route('admin.products.index')->with('success', 'Xóa sản phẩm thành công!');
+//     }
+
+namespace App\Http\Controllers\Admin;
+
+use App\Http\Controllers\Controller;
+use App\Repositories\Contracts\ProductRepositoryInterface;
+use App\Repositories\Contracts\CategoryRepositoryInterface;
+use Illuminate\Http\Request;
+use Illuminate\Support\Str;
+
+class ProductController extends Controller
+{
+    protected $productRepository;
+    protected $categoryRepository;
+
+    public function __construct(
+        ProductRepositoryInterface $productRepository,
+        CategoryRepositoryInterface $categoryRepository
+    ) {
+        $this->productRepository = $productRepository;
+        $this->categoryRepository = $categoryRepository;
+    }
+
+    /**
+     * Hiển thị danh sách sản phẩm
+     */
+    public function index(Request $request)
+    {
+        $query = $this->productRepository->newQuery();
+
+        // Tìm kiếm
+        if ($request->filled('search')) {
+            $query->where('name', 'like', '%' . $request->search . '%')
+                ->orWhere('sku', 'like', '%' . $request->search . '%');
+        }
+
+        // Lọc theo danh mục
+        if ($request->filled('category_id')) {
+            $query->where('category_id', $request->category_id);
+        }
+
+        // Lọc theo trạng thái
+        if ($request->filled('is_active')) {
+            $query->where('is_active', $request->is_active);
+        }
+
+        // Lọc theo khoảng giá
+        if ($request->filled('min_price')) {
+            $query->where('price', '>=', $request->min_price);
+        }
+        if ($request->filled('max_price')) {
+            $query->where('price', '<=', $request->max_price);
+        }
+
+        $products = $query->latest()->paginate(20);
+        $categories = $this->categoryRepository->getTree();
+
+        return view('admin.products.index', compact('products', 'categories'));
+    }
+
+    /**
+     * Hiển thị form tạo sản phẩm mới
+     */
+    public function create()
+    {
+        $categories = $this->categoryRepository->getTree();
+        return view('admin.products.create', compact('categories'));
+    }
+
+    /**
+     * Lưu sản phẩm mới
+     */
+    public function store(Request $request)
+    {
+        $validated = $request->validate([
+            'name' => 'required|string|max:255',
+            'slug' => 'nullable|string|unique:products,slug',
+            'sku' => 'required|string|unique:products,sku',
+            'description' => 'nullable|string',
+            'price' => 'required|numeric|min:0',
+            'compare_price' => 'nullable|numeric|min:0',
+            'cost_price' => 'nullable|numeric|min:0',
+            'category_id' => 'nullable|exists:categories,id',
+            'brand' => 'nullable|string|max:100',
+            'weight' => 'nullable|numeric|min:0',
+            'dimensions' => 'nullable|string|max:100',
+            'is_active' => 'boolean',
+            'is_featured' => 'boolean',
+            'stock_quantity' => 'nullable|integer|min:0',
+            'meta_title' => 'nullable|string|max:255',
+            'meta_description' => 'nullable|string',
+            'meta_keywords' => 'nullable|string',
+        ]);
+
+        // Tự động tạo slug nếu không có
+        if (empty($validated['slug'])) {
+            $validated['slug'] = Str::slug($validated['name']);
+        }
+
+        $product = $this->productRepository->create($validated);
+
+        return redirect()
+            ->route('admin.products.index')
+            ->with('success', 'Tạo sản phẩm thành công!');
+    }
+
+    /**
+     * Hiển thị chi tiết sản phẩm
+     */
+    public function show($id)
+    {
+        $product = $this->productRepository->find($id);
+
+        if (!$product) {
+            abort(404);
+        }
+
+        return view('admin.products.show', compact('product'));
+    }
+
+    /**
+     * Hiển thị form chỉnh sửa
+     */
+    public function edit($id)
+    {
+        $product = $this->productRepository->find($id);
+
+        if (!$product) {
+            abort(404);
+        }
+
+        $categories = $this->categoryRepository->getTree();
+
+        return view('admin.products.edit', compact('product', 'categories'));
+    }
+
+    /**
+     * Cập nhật sản phẩm
+     */
+    public function update(Request $request, $id)
+    {
+        $product = $this->productRepository->find($id);
+
+        if (!$product) {
+            abort(404);
+        }
+
+        $validated = $request->validate([
+            'name' => 'required|string|max:255',
+            'slug' => 'nullable|string|unique:products,slug,' . $id,
+            'sku' => 'required|string|unique:products,sku,' . $id,
+            'description' => 'nullable|string',
+            'price' => 'required|numeric|min:0',
+            'compare_price' => 'nullable|numeric|min:0',
+            'cost_price' => 'nullable|numeric|min:0',
+            'category_id' => 'nullable|exists:categories,id',
+            'brand' => 'nullable|string|max:100',
+            'weight' => 'nullable|numeric|min:0',
+            'dimensions' => 'nullable|string|max:100',
+            'is_active' => 'boolean',
+            'is_featured' => 'boolean',
+            'stock_quantity' => 'nullable|integer|min:0',
+            'meta_title' => 'nullable|string|max:255',
+            'meta_description' => 'nullable|string',
+            'meta_keywords' => 'nullable|string',
+        ]);
+
+        $this->productRepository->update($id, $validated);
+
+        return redirect()
+            ->route('admin.products.index')
+            ->with('success', 'Cập nhật sản phẩm thành công!');
+    }
+
+    /**
+     * Xóa sản phẩm
+     */
+    public function destroy($id)
+    {
+        $product = $this->productRepository->find($id);
+
+        if (!$product) {
+            abort(404);
+        }
+
+        $this->productRepository->delete($id);
+
+        return redirect()
+            ->route('admin.products.index')
+            ->with('success', 'Xóa sản phẩm thành công!');
+    }
+
+    /**
+     * Kích hoạt/vô hiệu hóa sản phẩm
+     */
+    public function toggleStatus($id)
+    {
+        $product = $this->productRepository->find($id);
+
+        if (!$product) {
+            return response()->json(['success' => false, 'message' => 'Sản phẩm không tồn tại']);
+        }
+
+        $this->productRepository->update($id, [
+            'is_active' => !$product->is_active
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Cập nhật trạng thái thành công',
+            'is_active' => !$product->is_active
+        ]);
+    }
+
+}

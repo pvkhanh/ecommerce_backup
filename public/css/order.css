@@ -1,0 +1,450 @@
+/**
+ * Order Management Styles
+ * Enhanced styles for order management interface
+ */
+
+/* ============================================
+   Gradient Backgrounds
+   ============================================ */
+.bg-gradient-primary {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+}
+
+.bg-gradient-success {
+    background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%) !important;
+}
+
+.bg-gradient-warning {
+    background: linear-gradient(135deg, #f7b733 0%, #fc4a1a 100%) !important;
+}
+
+.bg-gradient-danger {
+    background: linear-gradient(135deg, #eb3349 0%, #f45c43 100%) !important;
+}
+
+.bg-gradient-info {
+    background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%) !important;
+}
+
+.bg-gradient-purple {
+    background: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%) !important;
+}
+
+.bg-gradient-revenue {
+    background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%) !important;
+}
+
+/* ============================================
+   Card Enhancements
+   ============================================ */
+.card {
+    transition: all 0.3s ease;
+}
+
+.card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1) !important;
+}
+
+.card-header {
+    border-bottom: 2px solid #f0f0f0;
+}
+
+/* ============================================
+   Table Enhancements
+   ============================================ */
+.table tbody tr {
+    transition: all 0.2s ease;
+}
+
+.table tbody tr:hover {
+    background-color: #f8f9fa;
+    transform: scale(1.005);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.table thead th {
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    border-bottom: 2px solid #dee2e6;
+    text-transform: uppercase;
+    font-size: 0.75rem;
+    letter-spacing: 0.5px;
+    font-weight: 600;
+    color: #495057;
+}
+
+/* ============================================
+   Badge Styles
+   ============================================ */
+.badge {
+    font-weight: 600;
+    letter-spacing: 0.3px;
+    padding: 0.5rem 1rem;
+}
+
+.status-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 1rem;
+    border-radius: 50px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    transition: all 0.3s ease;
+}
+
+.status-badge:hover {
+    transform: scale(1.05);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+/* ============================================
+   Button Groups
+   ============================================ */
+.btn-group .btn {
+    transition: all 0.2s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+.btn-group .btn::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 0;
+    height: 0;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.3);
+    transform: translate(-50%, -50%);
+    transition: width 0.3s, height 0.3s;
+}
+
+.btn-group .btn:hover::before {
+    width: 300px;
+    height: 300px;
+}
+
+.btn-group .btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+/* ============================================
+   Timeline Styles
+   ============================================ */
+.order-timeline {
+    padding: 30px 0;
+    position: relative;
+}
+
+.timeline-item {
+    text-align: center;
+    position: relative;
+}
+
+.timeline-item:not(:last-child)::after {
+    content: '';
+    position: absolute;
+    top: 30px;
+    left: 50%;
+    right: -50%;
+    height: 3px;
+    background: #e0e0e0;
+    z-index: 0;
+    transition: all 0.3s ease;
+}
+
+.timeline-item.active:not(:last-child)::after {
+    background: linear-gradient(to right, #667eea, #e0e0e0);
+    height: 4px;
+}
+
+.timeline-icon {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 15px;
+    font-size: 24px;
+    color: white;
+    position: relative;
+    z-index: 1;
+    opacity: 0.5;
+    transition: all 0.3s ease;
+    box-shadow: 0 0 0 4px rgba(255, 255, 255, 0.5);
+}
+
+.timeline-item.active .timeline-icon {
+    opacity: 1;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2), 0 0 0 4px white;
+    transform: scale(1.1);
+}
+
+.timeline-item.current .timeline-icon {
+    animation: pulse 2s infinite;
+}
+
+.timeline-label {
+    font-weight: 600;
+    color: #6c757d;
+    margin-bottom: 5px;
+    font-size: 0.9rem;
+}
+
+.timeline-item.active .timeline-label {
+    color: #212529;
+    font-weight: 700;
+}
+
+.timeline-time {
+    font-size: 0.75rem;
+    color: #6c757d;
+}
+
+@keyframes pulse {
+    0%, 100% {
+        transform: scale(1.1);
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2), 0 0 0 4px white;
+    }
+    50% {
+        transform: scale(1.15);
+        box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3), 0 0 0 6px rgba(102, 126, 234, 0.3);
+    }
+}
+
+/* ============================================
+   Form Controls
+   ============================================ */
+.form-control, .form-select {
+    border-radius: 8px;
+    border: 2px solid #e9ecef;
+    transition: all 0.3s ease;
+}
+
+.form-control:focus, .form-select:focus {
+    border-color: #667eea;
+    box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.15);
+}
+
+.form-control-lg {
+    padding: 0.75rem 1rem;
+    font-size: 1rem;
+}
+
+/* ============================================
+   Alert Enhancements
+   ============================================ */
+.alert {
+    border-radius: 12px;
+    border: none;
+    padding: 1.25rem;
+}
+
+.alert-info {
+    background: linear-gradient(135deg, #e7f3ff 0%, #cfe2ff 100%);
+    color: #084298;
+}
+
+.alert-warning {
+    background: linear-gradient(135deg, #fff3cd 0%, #ffe69c 100%);
+    color: #856404;
+}
+
+.alert-danger {
+    background: linear-gradient(135deg, #f8d7da 0%, #f1aeb5 100%);
+    color: #842029;
+}
+
+.alert-success {
+    background: linear-gradient(135deg, #d1e7dd 0%, #badbcc 100%);
+    color: #0f5132;
+}
+
+/* ============================================
+   Stats Cards
+   ============================================ */
+.stat-card {
+    border-radius: 12px;
+    padding: 1.25rem;
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.stat-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+}
+
+/* ============================================
+   Action Buttons
+   ============================================ */
+.action-btn {
+    width: 38px;
+    height: 38px;
+    border-radius: 8px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+    border: 2px solid;
+    font-size: 0.9rem;
+}
+
+.action-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.action-btn-view {
+    background: #e7f3ff;
+    color: #0d6efd;
+    border-color: #b6d4fe;
+}
+
+.action-btn-view:hover {
+    background: #0d6efd;
+    color: white;
+}
+
+.action-btn-edit {
+    background: #fff3cd;
+    color: #ffc107;
+    border-color: #ffe69c;
+}
+
+.action-btn-edit:hover {
+    background: #ffc107;
+    color: white;
+}
+
+.action-btn-delete {
+    background: #f8d7da;
+    color: #dc3545;
+    border-color: #f1aeb5;
+}
+
+.action-btn-delete:hover {
+    background: #dc3545;
+    color: white;
+}
+
+/* ============================================
+   Loading States
+   ============================================ */
+.loading-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(255, 255, 255, 0.9);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 9999;
+}
+
+.spinner-border {
+    width: 3rem;
+    height: 3rem;
+    border-width: 0.3rem;
+}
+
+/* ============================================
+   Pagination
+   ============================================ */
+.pagination {
+    gap: 0.5rem;
+}
+
+.pagination .page-link {
+    border-radius: 8px;
+    border: 2px solid #e9ecef;
+    padding: 0.5rem 1rem;
+    color: #667eea;
+    font-weight: 600;
+    transition: all 0.3s ease;
+}
+
+.pagination .page-link:hover {
+    background: #667eea;
+    color: white;
+    border-color: #667eea;
+    transform: translateY(-2px);
+}
+
+.pagination .page-item.active .page-link {
+    background: #667eea;
+    border-color: #667eea;
+}
+
+/* ============================================
+   Responsive Adjustments
+   ============================================ */
+@media (max-width: 768px) {
+    .stat-card {
+        margin-bottom: 1rem;
+    }
+
+    .timeline-item {
+        margin-bottom: 2rem;
+    }
+
+    .timeline-item::after {
+        display: none;
+    }
+
+    .btn-group {
+        flex-wrap: wrap;
+        gap: 0.5rem;
+    }
+}
+
+/* ============================================
+   Print Styles
+   ============================================ */
+@media print {
+    .no-print {
+        display: none !important;
+    }
+
+    .card {
+        box-shadow: none !important;
+        border: 1px solid #dee2e6 !important;
+    }
+
+    .btn, .badge {
+        border: 1px solid #000 !important;
+    }
+}
+
+/* ============================================
+   Smooth Scrolling
+   ============================================ */
+html {
+    scroll-behavior: smooth;
+}
+
+/* ============================================
+   Custom Scrollbar
+   ============================================ */
+::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+}
+
+::-webkit-scrollbar-track {
+    background: #f1f1f1;
+}
+
+::-webkit-scrollbar-thumb {
+    background: #667eea;
+    border-radius: 5px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: #5568d3;
+}

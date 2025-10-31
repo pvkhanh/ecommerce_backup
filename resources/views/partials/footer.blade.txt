@@ -1,0 +1,3 @@
+<footer class="text-center py-3 mt-4 border-top">
+    <small>© {{ date('Y') }} Ecommerce Admin Dashboard</small>
+</footer>

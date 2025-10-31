@@ -1,0 +1,129 @@
+<?php
+
+namespace App\Repositories\Eloquent;
+
+use App\Repositories\BaseRepository;
+use App\Repositories\Contracts\UserRepositoryInterface;
+use App\Models\User;
+use App\Models\Image;
+use App\Models\Imageable;
+use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Pagination\LengthAwarePaginator;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
+
+class UserRepository extends BaseRepository implements UserRepositoryInterface
+{
+    protected function model(): string
+    {
+        return User::class;
+    }
+
+    /**
+     * Đặt ảnh đại diện (avatar) cho user — tự động bỏ avatar cũ và gắn avatar mới
+     */
+    public function setAvatar(User $user, Image $image): Image
+    {
+        return DB::transaction(function () use ($user, $image) {
+
+            // 1️⃣ Gỡ avatar cũ
+            Imageable::where('imageable_type', get_class($user))
+                ->where('imageable_id', $user->id)
+                ->where('is_main', true)
+                ->update(['is_main' => false]);
+
+            // 2️⃣ Tạo mới nếu ảnh chưa tồn tại
+            if (!$image->exists) {
+                $image = Image::create([
+                    'path' => $image->path ?? 'default-avatar.png',
+                    'type' => 'avatar',
+                    'alt_text' => $image->alt_text ?? 'User avatar',
+                    'is_active' => true,
+                ]);
+            }
+
+            // 3️⃣ Gán avatar mới
+            Imageable::updateOrCreate(
+                [
+                    'image_id' => $image->id,
+                    'imageable_id' => $user->id,
+                    'imageable_type' => get_class($user),
+                ],
+                [
+                    'is_main' => true,
+                    'position' => 1,
+                ]
+            );
+
+            return $image->fresh();
+        });
+    }
+
+    /**
+     * 🔍 Tìm kiếm + phân trang linh hoạt (theo các cột có thật)
+     */
+    public function searchPaginated(?string $keyword, int $perPage = 10): LengthAwarePaginator
+    {
+        $query = $this->newQuery();
+
+        if ($keyword) {
+            // Kiểm tra cột có tồn tại hay không
+            $columns = Schema::getColumnListing('users');
+
+            $query->where(function ($q) use ($keyword, $columns) {
+                foreach (['name', 'username', 'email', 'first_name', 'last_name'] as $col) {
+                    if (in_array($col, $columns)) {
+                        $q->orWhere($col, 'like', "%{$keyword}%");
+                    }
+                }
+            });
+        }
+
+        return $this->paginateQuery($query, $perPage);
+    }
+
+    /**
+     * Lấy danh sách user đang hoạt động
+     */
+    public function getActive(): Collection
+    {
+        return $this->model->where('is_active', true)->get();
+    }
+
+    public function getByRole(string $role): Collection
+    {
+        return $this->model->where('role', $role)->get();
+    }
+
+    public function getByGender(string $gender): Collection
+    {
+        return $this->model->where('gender', $gender)->get();
+    }
+
+    public function getVerified(): Collection
+    {
+        return $this->model->whereNotNull('email_verified_at')->get();
+    }
+
+    public function createdBetween(string $from, string $to): Collection
+    {
+        return $this->model->whereBetween('created_at', [$from, $to])->get();
+    }
+    /**
+     * Tìm kiếm user theo từ khóa (trả về Collection)
+     */
+    public function search(string $keyword): Collection
+    {
+        $columns = \Schema::getColumnListing('users');
+
+        return $this->newQuery()
+            ->where(function ($q) use ($keyword, $columns) {
+                foreach (['name', 'username', 'email', 'first_name', 'last_name'] as $col) {
+                    if (in_array($col, $columns)) {
+                        $q->orWhere($col, 'like', "%{$keyword}%");
+                    }
+                }
+            })
+            ->get();
+    }
+}
