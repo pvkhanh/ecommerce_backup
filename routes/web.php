@@ -118,28 +118,53 @@ Route::prefix('admin')->name('admin.')->middleware(['web'])->group(function () {
     // Route::post('/orders/{order}/ship', [OrderController::class, 'ship'])->name('orders.ship');
     // Route::post('/orders/{order}/complete', [OrderController::class, 'complete'])->name('orders.complete');
     // Order Management
+    // Route::prefix('orders')->name('orders.')->group(function () {
+    //     // Main CRUD
+    //     Route::get('/', [OrderController::class, 'index'])->name('index');
+    //     Route::get('/create', [OrderController::class, 'create'])->name('create');
+    //     Route::post('/', [OrderController::class, 'store'])->name('store');
+    //     Route::get('/{id}', [OrderController::class, 'show'])->name('show');
+    //     Route::get('/{id}/edit', [OrderController::class, 'edit'])->name('edit');
+    //     Route::put('/{id}', [OrderController::class, 'update'])->name('update');
+    //     Route::delete('/{id}', [OrderController::class, 'destroy'])->name('destroy');
+
+    //     // Trashed Orders
+    //     Route::get('/trashed/list', [OrderController::class, 'trashed'])->name('trashed');
+    //     Route::post('/restore/{id}', [OrderController::class, 'restore'])->name('restore');
+    //     Route::delete('/force-delete/{id}', [OrderController::class, 'forceDelete'])->name('force-delete');
+
+    //     // Status Management
+    //     Route::patch('/{id}/status', [OrderController::class, 'updateStatus'])->name('update-status');
+    //     Route::post('/{id}/confirm-payment', [OrderController::class, 'confirmPayment'])->name('confirm-payment');
+    //     Route::post('/{id}/cancel', [OrderController::class, 'cancel'])->name('cancel');
+
+    //     // Export & Print
+    //     Route::get('/{id}/invoice', [OrderController::class, 'invoice'])->name('invoice');
+    //     Route::get('/export/excel', [OrderController::class, 'export'])->name('export');
+    //     Route::patch('orders/{order}/update-status', [Admin\OrderController::class, 'updateStatus'])->name('orders.update-status');
+    // });
+
     Route::prefix('orders')->name('orders.')->group(function () {
-        // Main CRUD
         Route::get('/', [OrderController::class, 'index'])->name('index');
         Route::get('/create', [OrderController::class, 'create'])->name('create');
         Route::post('/', [OrderController::class, 'store'])->name('store');
-        Route::get('/{id}', [OrderController::class, 'show'])->name('show');
-        Route::get('/{id}/edit', [OrderController::class, 'edit'])->name('edit');
-        Route::put('/{id}', [OrderController::class, 'update'])->name('update');
-        Route::delete('/{id}', [OrderController::class, 'destroy'])->name('destroy');
+        Route::get('/trashed', [OrderController::class, 'trashed'])->name('trashed');
+        Route::get('/{order}', [OrderController::class, 'show'])->name('show');
+        Route::get('/{order}/edit', [OrderController::class, 'edit'])->name('edit');
+        Route::put('/{order}', [OrderController::class, 'update'])->name('update');
+        Route::delete('/{order}', [OrderController::class, 'destroy'])->name('destroy');
 
-        // Trashed Orders
-        Route::get('/trashed/list', [OrderController::class, 'trashed'])->name('trashed');
-        Route::post('/restore/{id}', [OrderController::class, 'restore'])->name('restore');
-        Route::delete('/force-delete/{id}', [OrderController::class, 'forceDelete'])->name('force-delete');
+        // Trashed restore / force delete
+        Route::post('/{id}/restore', [OrderController::class, 'restore'])->name('restore');
+        Route::delete('/{id}/force-delete', [OrderController::class, 'forceDelete'])->name('force-delete');
 
-        // Status Management
-        Route::patch('/{id}/status', [OrderController::class, 'updateStatus'])->name('update-status');
-        Route::post('/{id}/confirm-payment', [OrderController::class, 'confirmPayment'])->name('confirm-payment');
-        Route::post('/{id}/cancel', [OrderController::class, 'cancel'])->name('cancel');
+        // Quick status actions
+        Route::patch('/{order}/status', [OrderController::class, 'updateStatus'])->name('update-status');
+        Route::post('/{order}/confirm-payment', [OrderController::class, 'confirmPayment'])->name('confirm-payment');
+        Route::post('/{order}/cancel', [OrderController::class, 'cancel'])->name('cancel');
 
-        // Export & Print
-        Route::get('/{id}/invoice', [OrderController::class, 'invoice'])->name('invoice');
+        // Export / Invoice
+        Route::get('/{order}/invoice', [OrderController::class, 'invoice'])->name('invoice');
         Route::get('/export/excel', [OrderController::class, 'export'])->name('export');
     });
 });
